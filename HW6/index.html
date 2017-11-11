@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+
+<html>
+	
+	<head>
+		<style>
+			/*body {
+			overflow: hidden;
+			}*/
+			hr.style14 {
+				border: 0;
+				height: 1px;
+				background-image: -webkit-linear-gradient(left, #f0f0f0, #8c8b8b, #f0f0f0);
+				background-image: -moz-linear-gradient(left, #f0f0f0, #8c8b8b, #f0f0f0);
+				background-image: -ms-linear-gradient(left, #f0f0f0, #8c8b8b, #f0f0f0);
+				background-image: -o-linear-gradient(left, #f0f0f0, #8c8b8b, #f0f0f0);
+			}
+			
+			.button {
+				background-color: white;
+				color: black;
+				border: 2px solid #555555;
+			}
+			
+			font{
+				 size: 10;
+				 color: red;
+			}
+		</style>
+	</head>
+	
+	<body> 
+		<div style="width:98vw; height:95vh;">
+			<h1 style="float:top; text-align:center;"> Homework 6 </h1>
+			
+			<hr>
+			<div id="container" style="float:left; margin-left: 10px; width:65vw; height:85vh;"></div>
+			<div style="float:right; margin-right: 10px; width:30vw; height:85vh; overflow-x:hidden; overflow-y:scroll;">
+				<div><!-- Login-->
+					Login:
+					<input type='text' id='loginID' style="width:30%; height:2vh;">
+					
+					Date:
+					<input type="date" id="myDate" style="height:2vh;"value="2017-06-21" min="2017-06-01" max="2017-06-20">
+					<button class=button id='login' style="width:15%;">Login</button>
+					<br>
+					<b>Or</b> select existing file to direct login: <select id='fileSelect'></select>
+					<br>
+					<span id='loginReport'></span>
+					<br><br>
+					<button class=button id='upload' style="width:45%">Upload(server)</button>
+					<button class=button id='download' style="width:45%">Download</button>
+					<br><br>
+				</div>
+				
+				<hr class=style14>your information:<br><br>
+				
+				<div id='result' style="margin-right: 5px; width:100%; height:10%; overflow-x:hidden; overflow-y:scroll;"></div>
+				
+				<hr>
+				
+				<div><!-- Play-->
+					<br>
+					<button class=button id="play" style="width:45%">Playback </button>
+					<button class=button id="clear" style="width:45%">Clear </button>
+					<br>
+					<br>
+					<button class=button id="save" style="width:45%">Save</button>
+					<button class=button id="restore" style="width:45%">Restore </button>
+					<br>
+				</div>
+				
+				<br>
+				<hr class=style14>
+				<br>
+				
+				avatar information:
+				<div id='avatar' style="margin-right: 5px; width:100%; height:20%; overflow-x:hidden; overflow-y:scroll;"></div>
+				
+				<hr>
+				
+				<br>Speed option:<span id='speedStatus'><b> 1x speed</b></span>
+				<div><!-- Speed-->
+					<br>
+					<button class=button id="one" style="width:30%">1x </button>
+					<button class=button id="two" style="width:30%">2x </button>
+					<button class=button id="half" style="width:30%">0.5x</button>
+					<br>
+				</div>
+				
+				<br>Play option:<span id='playStatus'><b> forward play</b></span>
+				<div><!-- Play option-->
+					<br>
+					<button class=button id="forward" style="width:30%">Forward </button>
+					<button class=button id="backward" style="width:30%">Backward </button>
+					<button class=button id="pause" style="width:30%">Pause</button>
+					<br>
+				</div>
+				
+				<br>View option:<span id='viewStatus'><b> global view</b></span>
+				<div><!-- View option-->
+					<br>
+					<button class=button id="global" style="width:45%">Global view </button>
+					<button class=button id="person" style="width:45%">3rd person view </button>
+					<br>
+				</div>
+				
+				
+			</div>
+		</div>
+		<hr>
+		
+		
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r83/three.min.js"></script>
+		<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+		<script src="https://rawgit.com/jyunming-chen/tutsplus/master/js/text2D.js"></script>
+		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+		
+		<script>
+			//var shelljs = require(['shelljs'], function(shelljs){});
+			//var lsout = shelljs.ls("momo*.log");
+			//console.log (lsout);
+			
+			var camera, scene, controls, renderer;
+			var loader = new THREE.TextureLoader();
+			var mloader = new THREE.ObjectLoader();
+			
+			var textureF, textureW, textureW_B, textureFace;
+			
+			var floor, aLight ,dLight;
+			var house = new THREE.Object3D();
+			var walls = [], points = [];
+			
+			var mouse = new THREE.Vector2();
+			var raycaster = new THREE.Raycaster();
+			var pick;
+			
+			var logs = [];
+			var ti = [];
+			var xyi = [];
+			var firstPick = true;
+			var isMoving = false;
+			var move = new THREE.Object3D();;
+			var moveStart;
+			var speed = 1, t = 0, now = 0, now2 = 0;
+			
+			var forward = true, backward = false, pause = false;
+			var globalV = true, personV = false;
+			
+			var startTime = new Date().getTime();
+			var target = new THREE.Vector3(50, 50, 0);
+			
+			var body, leftArm, rightArm, head;
+			var scrolled = false;
+			var quat1, quat2;
+			/////////////////////////////////login///////////////////////////
+			var loginName;
+			var log;
+			var logFilename;
+			
+			var today = new Date();
+			var dd = today.getDate();
+			var mm = today.getMonth()+1; //January is 0!
+			var yyyy = today.getFullYear();
+			if(dd<10){
+				dd='0'+dd
+			} 
+			if(mm<10){
+				mm='0'+mm
+			} 
+			today = yyyy+'-'+mm+'-'+dd;//max is today
+			document.getElementById("myDate").setAttribute("max", today);
+			
+			$('#login').click( function() {
+				
+				loginName = $('#loginID').val();//
+				var ymd = $('#myDate').val().split("-");
+				var YYYYMMDD = ymd[0] + ymd[1] + ymd[2];
+				logFilename = loginName +'_'+ YYYYMMDD + '.log';//
+				
+				console.log ( 'login name: ' + loginName );
+				
+				$.get( "http://127.0.0.1:1337/login?name="+ loginName, function( data ) {
+					console.log ('after get');
+					console.log ('code: ' + data.status);
+					console.log ('output: ' + data.output);
+					
+					if(data && data.status === 1) {
+						if (data.output === "1") 
+						$('#loginReport').text ( loginName + ', you have been added!' );
+						else
+						$('#loginReport').text ( loginName + ', welcome back!' );
+					}
+				});(null)
+				
+			});
+			
+			
+			$('#upload').click ( function() {
+				var ymd = $('#myDate').val().split("-");
+				//var d = new Date();
+				//var YYYYMMDD = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+				var YYYYMMDD = ymd[0] + ymd[1] + ymd[2];
+				
+				
+				logFilename = loginName +'_'+ YYYYMMDD + '.log';
+				console.log ('filename:' + logFilename);
+				console.log ('before get:' + log);
+				
+				$.get ("http://127.0.0.1:1337/writelog?filename=" + logFilename + '&'+ log, function ( data ) {
+					
+				});
+			});
+			
+			$('#download').click ( function() {
+				$('#clear').click();
+				console.log ('in download ...');
+				
+				// which one to retrieve?
+				
+				$.get ("http://127.0.0.1:1337/readlog?filename="+logFilename, function ( data ) {
+					console.log ('dataOut: ' + data.output);
+					
+					var file = data.output.split (' ');
+					var date = file[0];
+					
+					var records=[];
+					ti = [];
+					xyi = [];
+					logs = [];
+					
+					var n = file[1];
+					for (var i = 0; i < n; i++) {
+						var record = {dt: file[2+2*i], code: file[2+2*i+1]};
+						records.push (record);
+						var xy = points[record.code-1].pos;
+						
+						var download = {
+							dt: file[2+2*i],
+							pos: [xy.x, xy.y],
+							where: points[record.code-1].name,
+							code: file[2+2*i+1]
+						};
+						logs.push(download);
+						
+					}
+					console.log(logs.length);
+					//$('#clear').click();
+					$('#result').html ('File name : <b>'+ logFilename + '</b><br><br>' + JSON.stringify (records));
+					$("#avatar").html(" ");
+				});
+			});
+			
+			//option select
+			var files = ['select file', 'momo_20170621', 'momo_20170620', 'momo_20170619', 'sam_20170621', 'sam_20170614', 'sam_20170605'];
+			for (var i = 0; i < files.length; i++)
+				$('#fileSelect').append ( "<option value=" + files[i] + ">" + files[i] + "</option>" );
+				
+			$('#fileSelect').change( function() {
+				loginName = $('#fileSelect').val().split('_')[0];
+				YYYYMMDD = $('#fileSelect').val().split('_')[1];
+				logFilename = $('#fileSelect').val() + '.log';//
+				
+				var day = YYYYMMDD.split("");
+				var days = day[0] +  day[1] + day[2] + day[3] +  "-" + day[4] + day[5] +  "-" + day[6] + day[7];
+				
+				$('#loginID').val(loginName);
+				$('#myDate').val(days);
+				
+				console.log ('in download.......');
+				
+				// which one to retrieve?
+				$.get( "http://127.0.0.1:1337/login?name="+ $('#fileSelect').val().split('_')[0], function( data ) {
+					console.log ('after get');
+					console.log ('code: ' + data.status);
+					console.log ('output: ' + data.output);
+					
+					if(data && data.status === 1) {
+						if (data.output === "1") 
+						$('#loginReport').text ( loginName + ', you have been added!' );
+						else
+						$('#loginReport').text ( loginName + ', welcome back!' );
+					}
+				});(null)
+				
+				$('#clear').click();
+				$.get ("http://127.0.0.1:1337/readlog?filename="+logFilename, function ( data ) {
+					console.log ('dataOut: ' + data.output);
+					
+					var file = data.output.split (' ');
+					var date = file[0];
+					
+					var records=[];
+					ti = [];
+					xyi = [];
+					logs = [];
+					
+					var n = file[1];
+					for (var i = 0; i < n; i++) {
+						var record = {dt: file[2+2*i], code: file[2+2*i+1]};
+						records.push (record);
+						var xy = points[record.code-1].pos;
+						
+						var download = {
+							dt: file[2+2*i],
+							pos: [xy.x, xy.y],
+							where: points[record.code-1].name,
+							code: file[2+2*i+1]
+						};
+						logs.push(download);
+						
+					}
+					console.log(logs.length);
+					//$('#clear').click();
+					$('#result').html ('File name : <b>'+ logFilename + '</b><br><br>' + JSON.stringify (records));
+					$("#avatar").html(" ");
+				});
+			});
+			
+			///////////////////////////////////////button///////////////////
+			$('#save').click(function() {
+				console.log(JSON.stringify(logs));
+				
+				localStorage.setItem('activity', JSON.stringify(logs));
+			});
+			
+			$('#play').click(function() {
+				startPlayback();
+			});
+			
+			$('#clear').click (function() {
+				ti = [];
+				xyi = [];
+				logs = [];
+				firstPick = true;
+				isMoving = false;
+				move.traverse(function(child){
+					if (child instanceof THREE.Mesh) {
+						child.material.visible = false;
+					}	
+				});
+				$("#avatar").html(" ");
+				
+			});
+			
+			$('#restore').click (function() {
+				logs = JSON.parse (localStorage.getItem ('activity'));
+			});
+			
+			function startPlayback () {
+				if (logs.length === 0)return;
+				
+				for (var i = 0; i < logs.length; i++) {
+					ti.push (logs[i].dt);
+					xyi.push (logs[i].pos);
+				}
+				isMoving = true;
+				move.traverse(function(child){
+					if (child instanceof THREE.Mesh) {
+						child.material.visible = true;
+					}	
+				});
+				moveStart = new Date().getTime();
+				now2 = moveStart;
+				now = 0;
+				scrolled = false;
+				//console.log(xyi);
+			}
+			
+			$('#one').click(function() {
+				speed = 1;
+				if(forward)now = t;
+				if(backward)now = logs[logs.length-1].dt - t;
+				now2 = new Date().getTime();
+				$('#speedStatus').html ( '<b> 1x speed</b>' );
+			});
+			$('#two').click(function() {
+				speed = 2;
+				if(forward)now = t;
+				if(backward)now = logs[logs.length-1].dt - t;
+				now2 = new Date().getTime();
+				$('#speedStatus').html ( '<b> 2x speed</b>' );
+			});
+			$('#half').click(function() {
+				speed = 0.5;
+				if(forward)now = t;
+				if(backward)now = logs[logs.length-1].dt - t;
+				now2 = new Date().getTime();
+				$('#speedStatus').html ( '<b> 0.5x speed</b>' );
+			});
+			
+			$('#forward').click(function() {
+				forward = true;
+				backward = false;
+				now = t;
+				now2 = new Date().getTime();
+				$("#avatar").append(function(){
+					return "<br><br><hr><b><font>Forward</font></b>";
+				});	
+				$('#playStatus').html ( '<b>forward play</b>' );
+			});
+			$('#backward').click(function() {
+				forward = false;
+				backward = true;
+				now = logs[logs.length-1].dt - t;
+				now2 = new Date().getTime();
+				$("#avatar").append(function(){
+					return "<br><br><hr><b><font>Backward</font></b>";
+				});
+				$('#playStatus').html ( '<b> backward play</b>' );
+			});
+			$('#pause').click(function() {
+				if(forward)now = t;
+				if(backward)now = logs[logs.length-1].dt - t;
+				now2 = new Date().getTime();
+				isMoving = !isMoving;
+				$("#avatar").append(function(){
+					return "<br><br><b><font>Pause</font></b>";
+				});
+				$('#playStatus').html ( '<b> pause</b>' );
+			});
+			
+			$('#global').click(function() {
+				globalV = true;
+				personV = false;
+				camera.position.set(0, 0, 1500);
+				camera.lookAt(0, 0, 0);
+				$('#viewStatus').html ( '<b> global view</b>' );
+			});
+			$('#person').click(function() {
+				globalV = false;
+				personV = true;
+				$('#viewStatus').html ( '<b> 3rd person view</b>' );
+			});
+			
+			$("#avatar").on('scroll', function(){
+				scrolled = true;
+			});
+			//////////////////////////threejs function//////////////////////////////////////
+			
+			function buildWalls(x, y, z, px, py, pz) {
+				//XY
+				/*
+					X:width, Y:height, Z:tall
+				*/
+				
+				var wall = new THREE.Mesh(new THREE.BoxGeometry(x, y, z), new THREE.MeshPhongMaterial({
+					map: textureW,
+					bumpMap: textureW_B,
+					bumpScale: 0.5,
+					side: THREE.FrontSide, 
+					opacity: 0.5,
+					transparent: true
+				}));
+				wall.position.set(px+60, py+30, pz);
+				house.add(wall);
+				
+				walls.push(wall);
+			}
+			
+			init();
+			animate();
+			
+			function init(){
+				var ww = $("#container").innerWidth();
+				var hh = $("#container").innerHeight();
+				
+				scene = new THREE.Scene();
+				camera = new THREE.PerspectiveCamera(50, ww / hh, 1, 10000);
+				camera.position.z = 1500; //65
+				
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize(ww, hh);
+				renderer.setClearColor(0x888888);
+				$("#container").append(renderer.domElement);
+				
+				controls = new THREE.OrbitControls(camera, renderer.domElement);
+				window.addEventListener('resize', onWindowResize, false);
+				window.addEventListener('mousedown', onDocumentMouseDown, false);
+				window.addEventListener('mouseup', onDocumentMouseUp, false);
+				$('#loginID').val("");
+				
+				
+				///////////////load//////////////////////////
+				loader.setCrossOrigin('');
+				textureF = loader.load('https://i.imgur.com/jzeYtmp.jpg');
+				textureW = loader.load('https://i.imgur.com/grtTrjq.jpg');
+				textureW_B = loader.load('https://i.imgur.com/aPjvn6s.jpg');
+				textureFace = loader.load('https://i.imgur.com/W2cOUar.png');
+				
+				////////////////////man///////////////////
+				body = new THREE.Mesh (new THREE.CylinderGeometry(15, 15, 100, 32), new THREE.MeshLambertMaterial({color:0xff9966}));
+				leftArm = new THREE.Mesh (new THREE.CylinderGeometry(5, 5, 32, 32), new THREE.MeshLambertMaterial({color:0xff9966}));
+				rightArm = leftArm.clone();
+				head = new THREE.Mesh (new THREE.SphereGeometry( 15, 32, 32 ), new THREE.MeshLambertMaterial({color:0x000000}));
+				face = new THREE.Mesh (new THREE.PlaneGeometry( 30, 30, 32, 32), new THREE.MeshLambertMaterial({map: textureFace, side: THREE.DoubleSide}));
+				
+				body.rotation.x = Math.PI/2;
+				body.position.z = 50;
+				leftArm.position.set(0, 30, 80);
+				leftArm.rotation.x = -Math.PI/3;
+				rightArm.position.set(0, -30, 80);
+				rightArm.rotation.x = Math.PI/3;
+				head.position.z = 120;
+				face.rotation.y = Math.PI/2;
+				face.rotation.x = Math.PI/2;
+				face.position.set(15, 0, 120);
+				
+				
+				move.add(body);
+				move.add(leftArm); 
+				move.add(rightArm);
+				move.add(head);
+				move.add(face);
+				scene.add (move);
+				move.traverse(function(child){
+					if (child instanceof THREE.Mesh) {
+						child.material.visible = false;
+					}	
+				});
+				move.rotation.x = Math.PI/2;
+				
+				//////////////////////////////loader//////////////////////////
+				var oloader = new THREE.ObjectLoader();
+				oloader.load("resource/bed.json", function(obj){
+					scene.add(obj);
+					obj.scale.set(40,40,40);
+					obj.rotation.y = Math.PI;
+					obj.rotation.x = Math.PI/2;
+					obj.position.set(-105,105,30);
+				});
+				oloader.load("resource/sofa1.json", function(obj){
+					scene.add(obj);
+					obj.scale.set(7,7,7);
+					obj.rotation.y = Math.PI/2;
+					obj.rotation.x = Math.PI/2;
+					obj.position.set(370,80,15);
+				});
+				oloader.load("resource/tv.json", function(obj){
+					scene.add(obj);
+					obj.scale.set(25,25,25);
+					obj.rotation.y = -Math.PI/2;
+					obj.rotation.x = Math.PI/2;
+					obj.position.set(200,0,10);
+				});
+				oloader.load("resource/table.json", function(obj){
+					scene.add(obj);
+					obj.scale.set(75,20,30);
+					obj.rotation.y = -Math.PI/2;
+					obj.rotation.x = Math.PI/2;
+					obj.position.set(200,60,0);
+				});
+				oloader.load("resource/toilet.json", function(obj){
+					scene.add(obj);
+					obj.scale.set(3,3,3);
+					obj.rotation.y = Math.PI;
+					obj.rotation.x = Math.PI/2;
+					obj.position.set(-40,405,0);
+				});
+				///////////////////////////others//////////////
+				buildWalls(60, 200, 80, 600, 820, 40);//k
+				buildWalls(230, 60, 80, 740, 890, 40);//k
+				buildWalls(60, 220, 80, 830, 750, 40);//k
+				buildWalls(80, 60, 80, 305, 890, 40);//bath
+				buildWalls(80, 80, 20, 230, 890, 180);//bath
+				///////////////////////////////////////////////
+				pick = new THREE.Mesh (new THREE.RingGeometry (15, 22, 32), new THREE.MeshBasicMaterial({color:0xefc9ed}));
+				scene.add (pick);
+				pick.material.visible = false;
+				
+				////////////////////////////////////////////
+				
+				var lcolor = 0x222222;//ffd9b3;
+				dLight = new THREE.DirectionalLight(lcolor, 0.8);
+				dLight.position.set(0, 0, 500);
+				
+				aLight = new THREE.AmbientLight(0x222222);//bbbbbb);
+				
+				var gridXZ = new THREE.GridHelper(500, 100, 'red', 'white');
+				gridXZ.rotation.x = Math.PI/2;
+				gridXZ.position.z = 0.5;
+				floor = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 100, 100),
+				new THREE.MeshPhongMaterial({
+					color: 0x333333,//bbbbbb,
+					map: textureF
+				}));
+				
+				scene.add(camera);
+				//scene.add(gridXZ);
+				scene.add(floor);
+				scene.add(aLight);
+				scene.add(dLight);
+				////////////////////////wall//////////////////////////////
+				buildWalls(20, 320, 200,  10, 470, 100);//1
+				buildWalls(170, 20, 200, 105, 320, 100);//3
+				buildWalls(150, 20, 200,  95, 620, 100);//2
+				buildWalls(20, 530, 200, 180, 310+100+265, 100);//4
+				buildWalls(10, 310,  50, 185, 155, 25);//5
+				buildWalls(270, 20, 200, 325, 930, 100);//6
+				buildWalls(330, 20, 200, 460+90+165, 930, 100);//7
+				buildWalls(520, 10,  50, 190+260, 5, 25);//8
+				buildWalls(10, 270,  50, 190+515, 145, 25);//9
+				buildWalls(210, 20, 200, 1000-120-105, 290, 100);//10
+				buildWalls(20, 620, 200, 1000-120-10, 300+310, 100);//11
+				
+				buildWalls(20, 	20, 200, 450, 910, 100);//12
+				buildWalls(10,  64, 200, 450, 868, 100);//13
+				buildWalls(10, 120, 200, 450, 900-64-90-60, 100);//14
+				buildWalls(10, 105, 200, 450, 900-64-90-120-90-52.5-1, 100);//15
+				buildWalls(20,  30, 200, 445, 430-15, 100);//16
+				buildWalls(20,  30, 200, 445, 415-105-15, 100);//17
+				buildWalls(10,  20, 200, 460, 290, 100);//18
+				buildWalls(60,  10, 200, 870-30, 920-275-5, 100);//19
+				
+				buildWalls(30,  10, 200, 195, 920-110-5, 100);//20
+				buildWalls(65,  10, 200, 180+32.5, 800-65-5, 100);//21
+				buildWalls(100, 10, 200, 180+65+100+50, 800-65-5, 100);//22
+				buildWalls(60,  20, 200, 180+30+10, 420, 100);//23
+				buildWalls(75,  20, 200, 180+10+60+110+37.5, 420, 100);//24
+				
+				buildWalls(20, 100,  50, 180, 330+50, 175);//stor door
+				buildWalls(10,  90,  50, 450, 900-64-45, 175);//bath door r
+				buildWalls(10,  92,  50, 450, 900-64-90-120-45, 175);//bed door r
+				buildWalls(100, 10,  50, 180+65+50, 800-65-5, 175);//bath door d
+				buildWalls(110, 20,  50, 180+10+60+55, 420, 175);//bed door d
+				buildWalls(20, 105,  50, 445, 415-52.5, 175);//living door l
+				buildWalls(210, 20,  50, 465+100, 290, 175);//living door d
+				buildWalls(90,  20,  50, 460+45, 930, 175);//main door 
+				
+				scene.add(house);
+				house.position.set(-500, -500, 0);
+				///////////////////////point/////////////////////////////
+				var geometry = new THREE.CircleGeometry( 20, 32 );
+				var material = new THREE.MeshLambertMaterial();
+				var circle = new THREE.Mesh( geometry, material );
+				
+				function setPoint(px, py, pz, pcolor, name, code){
+					var cc = circle.clone();
+					cc.material = new THREE.MeshLambertMaterial( { color: pcolor } );
+					
+					cc.position.set(px-500+60, py-500+30, pz);
+					scene.add(cc);
+					cc.name = name;
+					cc.code = code;
+					cc.pos = new THREE.Vector3(px-500+60, py-500+30, pz);
+					points.push(cc);
+				}
+				
+				setPoint( 95, 370, 5, 0xff0000, 'store_room', 1);//stor 1
+				setPoint(305, 320, 5, 0x00ff00, 'terrace_door', 2);//terrace u 2//
+				setPoint(305, 145, 5, 0x11bb11, 'terrace_left', 3);//terrace d 3
+				setPoint(565, 145, 5, 0x446644, 'terrace_right', 4);//terrace r 4 
+				setPoint(305, 480, 5, 0x444444, 'bedroom_to terrace', 5);//bed d 5//
+				setPoint(400, 580, 5, 0x888888, 'bedroom_to_living', 6);//bed r 6
+				setPoint(305, 680, 5, 0xcccccc, 'bedroom_to_bathroom', 7);//bed u 7
+				setPoint(305, 790, 5, 0x0000ff, 'bathroom', 8);//bath l 8
+				setPoint(505, 880, 5, 0xcc0000, 'main_door', 9);//living main door  9
+				setPoint(505, 780, 5, 0xcc9999, 'living_to_bathroom', 10);//living bath door 10//
+				setPoint(505, 580, 5, 0xffaaaa, 'living_to_bedroom', 11);//living bed door 11
+				setPoint(505, 370, 5, 0x993333, 'living_to_terrace', 12);//living terrace door 12
+				setPoint(750, 460, 5, 0xcccc00, 'sofa', 13);//sofa 13
+				setPoint(720, 780, 5, 0xcc00cc, 'kitchen', 14);//kitchen 14
+				////////////////////////////////////////////////////////////////////
+				
+				
+			}
+			
+			function onDocumentMouseUp () {
+				pick.material.visible = false;
+			}
+			
+			function onDocumentMouseDown(event) {
+				
+				//event.preventDefault();
+				var viewportPos = $('#container').get(0).getBoundingClientRect();
+				mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+				mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+				
+				
+				raycaster.setFromCamera(mouse, camera);
+				var intersects = raycaster.intersectObjects(points);
+				if (intersects.length > 0) {
+					
+					//console.log (intersects[0].object.name);
+					if(!personV){
+						pick.material.visible = true;
+						var xy = intersects[0].object.pos;
+						pick.position.x = xy.x;
+						pick.position.y = xy.y;
+						pick.position.z = xy.z+3;// important: set above the floor plan
+						
+						if (firstPick) {
+							firstPick = false;
+							startTime = new Date().getTime();
+							dt = 0;
+						} else {
+							dt = new Date().getTime() - startTime;
+						}
+						var record = {
+							dt: dt,
+							pos: [xy.x, xy.y],
+							where: intersects[0].object.name,
+							code: intersects[0].object.code
+						};
+						logs.push(record);
+					}
+				}
+				
+			}
+			
+			function onWindowResize() {
+				
+				var ww = $("#container").innerWidth();
+				var hh = $("#container").innerHeight();
+				
+				camera.aspect = ww / hh;
+				camera.updateProjectionMatrix();
+				renderer.setSize(ww, hh);
+			}
+			
+			function animate(){
+				requestAnimationFrame(animate);
+				render();
+				//console.log(logs[1]);
+				
+				//////////////////////login//////////////////
+				var dd = [];
+				dd.push (new Date().getTime());
+				dd.push (logs.length);
+				for (var i = 0; i < logs.length; i++){
+					dd.push (logs[i].dt);
+					dd.push (logs[i].code);
+				}
+				
+				log = jQuery.param ({ data: dd });
+				
+				//////////////////moving////////////////////
+				if (isMoving) {
+					if(forward){
+						t = (new Date().getTime() - now2)*speed + now;
+						
+						for(var i = 0; i < logs.length; i++){
+							//move.lookAt(logs[i].pos[0], logs[i].pos[1], 50);
+							target = new THREE.Vector3(logs[i].pos[0], logs[i].pos[1], 0);
+							if(t < logs[i].dt && i > 1){
+								var count = Math.floor(t/100)%10;
+								$("#avatar").append(function(){
+								return "<br><br>Time : " + Math.floor(t/1000) + "." + count + "s"+
+										"<br><span>Previous : <b>"+ logs[i-1].where + "</b></span>"+
+										"<br><span>Next : <b>"+ logs[i].where +"</b></span>";
+								});	
+								scrolled = false;
+								break;
+							}
+						}
+						if (t > logs[logs.length-1].dt) {
+							isMoving = false;
+							return;
+						}
+						
+						var mov = interpolate (t);
+						move.position.x = mov[0];
+						move.position.y = mov[1];
+						move.position.z = 0;
+						
+					}
+					if(backward){
+						t = logs[logs.length-1].dt - (new Date().getTime() - now2)*speed - now;
+						
+						for(var i = logs.length-1; i > 0 ; i--){
+							//move.lookAt(logs[i].pos[0], logs[i].pos[1], 50);
+							if(i < logs.length-2)
+								target = new THREE.Vector3(logs[i+1].pos[0], logs[i+1].pos[1], 0);
+							else
+								target = new THREE.Vector3(logs[logs.length-1].pos[0], logs[logs.length-1].pos[1], 0);
+								
+							if(t > logs[i].dt){
+								var count = Math.floor(t/100)%10;
+								$("#avatar").append(function(){
+								return "<br><br>Time : " + Math.floor(t/1000) + "." + count + "s"+
+										"<br><span>Previous : <b>"+ logs[i-1].where + "</b></span>"+
+										"<br><span>Next : <b>"+ logs[i].where +"</b></span>";
+								});
+								scrolled = false;
+								break;
+							}
+						}
+						if (t <= 0) {
+							isMoving = false;
+							return;
+						}
+						
+						var mov = interpolate (t);
+						move.position.x = mov[0];
+						move.position.y = mov[1];
+						move.position.z = 0;
+					}
+					//////////////////////////transform//////////////////////
+					quat1 = new THREE.Quaternion();
+					quat1.setFromRotationMatrix (move.matrix);
+				
+					var tar = target.clone().sub(move.position);
+					var localX = tar.normalize();
+					
+					//console.log(tar.y > 0 && tar.x > 0);
+					
+					if(tar.x > 0 && tar.y <= 0)//lu to rd
+						var localY = new THREE.Vector3(1,1,0).normalize();
+					else if(tar.x < 0 && tar.y < 0)//ru to ld
+						var localY = new THREE.Vector3(0,-1,0).normalize();
+					else if(tar.x < 0 && tar.y > 0)//rd to lu
+						var localY = new THREE.Vector3(0,-1,0).normalize();
+					else if(tar.x > 0 && tar.y > 0)//ld to ru
+						var localY = new THREE.Vector3(-1,0,0).normalize();	
+					else	
+						var localY = new THREE.Vector3(0,-1,0).normalize();
+					
+					
+					var tmp = localY.clone().projectOnVector(localX);
+					localY.sub(tmp).normalize();
+					var localZ = new THREE.Vector3();
+					localZ.crossVectors (localX, localY);
+
+					move.matrix.makeBasis (localX, localY, localZ);
+					//move.matrixAutoUpdate = false;
+	 
+					quat2 = new THREE.Quaternion();
+					quat2.setFromRotationMatrix(move.matrix);
+					
+					move.matrixAutoUpdate = true; //!
+		
+					var qm = quat1.clone();
+					qm.slerp(quat2, 1);
+					move.quaternion.copy(qm);
+					//////////////////////////////////////////////////////////////
+					
+				}
+				
+				function interpolate(t) {
+					if(forward){
+						for (var i = 0; i < ti.length-1; i++) {
+							if (t < ti[i]) {
+								break;
+							}
+						}
+						var s = (t - ti[i-1])/(ti[i] - ti[i-1]);
+						var x = (1-s)*xyi[i-1][0] + s*xyi[i][0];
+						var y = (1-s)*xyi[i-1][1] + s*xyi[i][1];
+						
+						return [x,y];
+						
+					}else if(backward){
+						for (var i = ti.length-1; i > 0 ; i--) {
+							if (t > ti[i-1]) {
+								break;
+							}
+						}
+						var s = (t - ti[i])/(ti[i-1] - ti[i]);
+						var x = (1-s)*xyi[i][0] + s*xyi[i-1][0];
+						var y = (1-s)*xyi[i][1] + s*xyi[i-1][1];
+						
+						return [x,y];
+					}
+				}
+				
+				/////////////////////////////////////////////////////////////
+				if(!scrolled){
+					$("#avatar").scrollTop($("#avatar").get(0).scrollHeight);
+				}
+				//////////////////view////////////////////////////////////
+				if(personV){
+					var relativeCameraOffset = new THREE.Vector3(-200,0, 200);
+					var cameraOffset = move.localToWorld (relativeCameraOffset);
+					camera.position.copy (cameraOffset);
+					camera.up.set(0, 0, 1);
+					controls.target = new THREE.Vector3(move.position.x, move.position.y, 100);
+				}
+				
+			}
+			
+			function render() {
+				controls.update();
+				renderer.render(scene, camera);
+			}
+			//window.focus();
+			
+			
+		</script>
+	</body>
+	
+</html>

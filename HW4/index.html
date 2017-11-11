@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+	hr.style14 {
+	  border: 0;
+	  height: 1px;
+	  background-image: -webkit-linear-gradient(left, #f0f0f0, #8c8b8b, #f0f0f0);
+	  background-image: -moz-linear-gradient(left, #f0f0f0, #8c8b8b, #f0f0f0);
+	  background-image: -ms-linear-gradient(left, #f0f0f0, #8c8b8b, #f0f0f0);
+	  background-image: -o-linear-gradient(left, #f0f0f0, #8c8b8b, #f0f0f0);
+	}
+
+	.button {
+	  background-color: white;
+	  color: black;
+	  border: 2px solid #555555;
+	}
+</style>
+</head>
+
+<body> 
+	<div style="width:98vw; height:95vh;">
+		
+		<h1 style="float:top; text-align:center; "> Homework 4</h1>
+		<hr>
+		
+		
+		<div id="container" style="float:left; margin-left: 10px; width:46vw; height:85vh;"></div>
+
+		<div style="float:right; margin-right: 10px; width:46vw; height:85vh; overflow:scroll">
+		  <div>
+			<br>
+			<b>Object Type:</b>
+			<br>
+			<input type="radio" name="pickobjbox" id="s1" style=" margin-left: 10px;">
+			<label for="s1">Cube</label>
+			<br>
+			<input type="radio" name="pickobjbox" id="s2" style=" margin-left: 10px;">
+			<label for="s2">Sphere</label>
+			<br>
+			<input type="radio" name="pickobjbox" id="s3" style=" margin-left: 10px;">
+			<label for="s3">Cylinder</label>
+		  </div>
+
+		  <hr class=style14>
+
+		  <div>
+			<br>
+			<b>Cube Size:</b>
+			<button class=button id='changeB' style="width:25%; margin-left:10px;">Change</button>
+			<br> x:
+			<input id="x" type="number" value=10 min=1 max=300 style="width:5vw; height:1vw; margin:5px;"> y:
+			<input id="y" type="number" value=10 min=1 max=300 style="width:5vw; height:1vw; margin:5px;"> z:
+			<input id="z" type="number" value=10 min=1 max=300 style="width:5vw; height:1vw; margin:5px;">
+			<br>
+			<br>
+		  </div>
+
+		  <div>
+			<b>Sphere radius:(1-100)</b>
+			<br>
+			<input type=range id="radius" min=1 max=100 Value=10 style="width:25vw; margin:5px" /> (
+			<span id='radiusPrint'>10</span>)
+			<br>
+		  </div>
+		  <br>
+
+		  <div>
+			<b>Cylinder Size:</b>
+			<button class=button id='changeC' style="width:25%; margin-left:10px;">Change</button>
+			<br>
+			<br>
+			<span style="width:5vw; height:2vh; margin-left:10px;">top radius:</span>
+			<input id="t" type="number"  min=1 max=100 value=10 style="width:5vw; height:1vh;">
+			<br>
+			<span style="width:5vw; height:2vh; margin-left:10px;">button radius:</span>
+			<input id="b" type="number"  min=1 max=100 value=10 style="width:5vw; height:1vh;">
+			<br>
+			<span style="width:5vw; height:2vh; margin-left:10px;">height:</span>
+			<input id="h" type="number"  min=1 max=100 value=10 style="width:5vw; height:1vh;">
+
+			<br>
+		  </div>
+
+		  <hr class=style14>
+
+		  <div>
+			<br>
+			<b>Color Selector:</b>
+			<br>
+			<input type=radio name="texture" id='red' value='red' style=" margin-left: 10px;">red
+			<input type=radio name="texture" id='blue' value='blue' style="margin-left: 10px;">blue
+			<input type=radio name="texture" id='green' value='green' style="margin-left: 10px;">green
+		  </div>
+		  
+		  <hr class=style14>
+
+		  <br>
+		  <button class=button id='lockScreen' style="width:30%">LockScreen</button>
+		  <span id='lock' style="width:5vw; height:1vw; margin-left:10px; color:rgb(179, 36, 0);">Screen Lock</span>
+		  <br><br>
+		  
+		  <button class=button id='clear' style="width:30%">Clear</button>
+		  <button class=button id='save' style="width:30%">Save</button>
+		  <button class=button id='restore' style="width:30%">Restore</button>
+		  <br><br><a href="http://jsfiddle.net/MomoWu/5omzy8b8/">JSFiddle</a>
+		</div>
+		
+	</div><hr>
+	
+
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+	<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+	<script src="https://momowu910.github.io/JSFile/html5slider.js"></script>
+	<script src="https://rawgit.com/jyunming-chen/tutsplus/master/js/text2D.js"></script>
+	
+	<script>
+		$('#s1').click(function() {
+		  mesh.geometry = new THREE.BoxGeometry(cubex, cubey, cubez);
+		});
+		$('#s2').click(function() {
+		  mesh.geometry = new THREE.SphereGeometry(radius, 32, 32);
+		});
+		$('#s3').click(function() {
+		  mesh.geometry = new THREE.CylinderGeometry(cylt, cylb, cylh, 32);
+		});
+		  
+
+		$('#red').click(function() {
+		  mesh.material.color = new THREE.Color(0xff0000);
+		  colorM = new THREE.Color(0xff0000);
+		});
+		$('#blue').click(function() {
+		  mesh.material.color = new THREE.Color(0x0000ff);
+		  colorM = new THREE.Color(0x0000ff);
+		});
+		$('#green').click(function() {
+		  mesh.material.color = new THREE.Color(0x00ff00);
+		  colorM = new THREE.Color(0x00ff00);
+		});
+
+
+		$('#changeB').click(function() {
+		  cubex = $('#x').val();
+		  cubey = $('#y').val();
+		  cubez = $('#z').val();	  
+		});
+
+		$('#changeC').click(function() {
+		  cylt = $('#t').val();
+		  cylb = $('#b').val();
+		  cylh = $('#h').val();
+			  
+		});
+
+		$('#radius').change(function() {
+		  $('#radiusPrint').text($(this).val());
+		  radius = $(this).val();
+			  
+		});
+
+		$('#lockScreen').click(function() {
+			turn = !turn;
+		});
+
+		$('#clear').click(function() {
+
+		  cubes.forEach(function(cube) {
+			scene.remove(cube);
+		  });
+		  spheres.forEach(function(sphere) {
+			scene.remove(sphere);
+		  });
+		  cylinders.forEach(function(cylinder) {
+			scene.remove(cylinder);
+		  });
+		  cubes = [];
+		  spheres = [];
+		  cylinders = [];
+		});
+		$('#save').click(function() {
+
+		  var statesB = [];
+		  var statesS = [];
+		  var statesC = [];
+		  cubes.forEach(function(cube) {
+			statesB.push(cube.name);
+		  });
+		  spheres.forEach(function(sphere) {
+			statesS.push(sphere.name);
+		  });
+		  cylinders.forEach(function(cylinder) {
+			statesC.push(cylinder.name);
+		  });
+
+		  localStorage.setItem('stateStrB', JSON.stringify(statesB));
+		  localStorage.setItem('stateStrS', JSON.stringify(statesS));
+		  localStorage.setItem('stateStrC', JSON.stringify(statesC));
+
+		});
+		$('#restore').click(function() {
+
+		  var statesB = JSON.parse(localStorage.getItem('stateStrB'));
+		  var statesS = JSON.parse(localStorage.getItem('stateStrS'));
+		  var statesC = JSON.parse(localStorage.getItem('stateStrC'));
+		  statesB.forEach(function(stateStrB) {
+			var state = JSON.parse(stateStrB);
+			buildCube(state.size[0], state.size[1], state.size[2], new THREE.Vector3(state.pos[0], 0, state.pos[2]), state.color);
+		  });
+		  statesS.forEach(function(stateStrS) {
+			var state = JSON.parse(stateStrS);
+			buildSphere(state.rad, new THREE.Vector3(state.pos[0], 0, state.pos[1]), state.color);
+		  });
+		  statesC.forEach(function(stateStrC) {
+			var state = JSON.parse(stateStrC);
+			buildCylinder(state.size[0], state.size[1], state.size[2], new THREE.Vector3(state.pos[0], 0, state.pos[2]), state.color);
+		  });
+
+		});
+
+
+		var camera, scene, renderer, controls;
+		var raycaster = new THREE.Raycaster();
+		var mouse = new THREE.Vector2();
+		var pickplane, light, alight;
+
+		var mesh, colorM = new THREE.Color();
+
+		var cubex = $('#x').val(),
+		  cubey = $('#y').val(),
+		  cubez = $('#z').val();
+
+		var radius = $('#radius').val();
+
+		var cylt = $('#t').val(),
+		  cylb = $('#b').val(),
+		  cylh = $('#h').val();
+
+		var cubes = [],
+		  spheres = [],
+		  cylinders = [];
+		  
+		var SpriteText2D = THREE_Text.SpriteText2D;
+		var textAlign = THREE_Text.textAlign;
+		var sprite, turn = true;
+
+		init();
+		animate();
+
+
+		function buildCube(cx, cy, cz, pos, colorC) {
+
+		  var cube = new THREE.Mesh(new THREE.BoxGeometry(cx, cy, cz), new THREE.MeshPhongMaterial({
+			color: colorC
+		  }));
+		  var posy = cy / 2;
+		  scene.add(cube);
+		  var prop = {
+			size: [cx, cy, cz],
+			pos: [pos.x, posy, pos.z],
+			color: colorC
+		  };
+
+		  cubes.push(cube);
+		  cube.position.set(pos.x, posy, pos.z);
+		  cube.name = JSON.stringify(prop);
+		}
+
+		function buildSphere(rad, pos, colorS) {
+
+		  var sphere = new THREE.Mesh(new THREE.SphereGeometry(rad, 32, 32), new THREE.MeshPhongMaterial({
+			color: colorS
+		  }));
+
+		  scene.add(sphere);
+		  var prop = {
+			rad: rad,
+			pos: [pos.x, pos.z],
+			color: colorS
+		  };
+		  sphere.name = JSON.stringify(prop);
+		  spheres.push(sphere);
+		  sphere.position.set(pos.x, rad, pos.z);
+
+		}
+
+		function buildCylinder(ct, cb, ch, pos, colorCy) {
+		  var cylinder = new THREE.Mesh(new THREE.CylinderGeometry(ct, cb, ch, 32, 32), new THREE.MeshPhongMaterial({
+			color: colorCy
+		  }));
+
+		  var posy = ch / 2;
+		  scene.add(cylinder);
+		  var prop = {
+			size: [ct, cb, ch],
+			pos: [pos.x, posy, pos.z],
+			color: colorCy
+		  };
+		  cylinder.name = JSON.stringify(prop);
+		  cylinders.push(cylinder);
+		  cylinder.position.set(pos.x, ch / 2, pos.z);
+
+		}
+
+		function setText(text, pos){
+			
+			sprite = new SpriteText2D(text, {
+					align: textAlign.center,
+					font: '20px Arial', //Courier',
+					fillStyle: '#ffffff',
+					antialias: true
+		  });
+		  sprite.position.copy(pos);
+		  sprite.scale.set(.9, .9, .9);
+		  sprite.position.y += 2;
+		  scene.add(sprite);
+		  
+		}
+
+		function init() {
+
+		  var ww = $("#container").innerWidth();
+		  var hh = $("#container").innerHeight();
+		  renderer = new THREE.WebGLRenderer();
+		  renderer.setSize(ww, hh);
+		  renderer.setClearColor(0xaaaaaa);
+		  $("#container").append(renderer.domElement);
+
+		  scene = new THREE.Scene();
+		  camera = new THREE.PerspectiveCamera(50, ww / hh, 1, 3000);
+		  camera.position.z = 200;
+		  camera.position.y = 400;
+		  scene.add(camera);
+
+		  var mesh_geom = new THREE.BoxGeometry(cubex, cubey, cubez);
+		  var mesh_mat = new THREE.MeshPhongMaterial({
+			color: 0xff0000
+		  });
+		  mesh = new THREE.Mesh(mesh_geom, mesh_mat);
+		  mesh.position.set(-20, 0, 20);
+		  scene.add(mesh);
+
+		  pickplane = new THREE.Mesh(new THREE.PlaneGeometry(300, 300),
+			new THREE.MeshBasicMaterial({
+			  color: 0xff1234
+			}));
+		  pickplane.rotation.x = -Math.PI / 2;
+		  scene.add(pickplane);
+		  pickplane.material.visible = false;
+
+		  alight = new THREE.AmbientLight(0x404040);
+		  scene.add(alight);
+
+		  light = new THREE.PointLight(0xffffff, 1, 1000);
+		  light.position.set(camera.position);
+		  scene.add(light);
+			
+		  setText('+X:150', new THREE.Vector3(180, 0, 0));
+		  setText('-X:150', new THREE.Vector3(-180, 0, 0));
+		  setText('+Z:150', new THREE.Vector3(0, 0, 180));
+		  setText('-Z:150', new THREE.Vector3(0, 0, -180));
+		  
+			  
+		  var gridXZ = new THREE.GridHelper(300, 30, 'red', 'white');
+		  scene.add(gridXZ);
+
+		  document.getElementById("s1").checked = true;
+		  document.getElementById("red").checked = true;
+		  controls = new THREE.OrbitControls(camera, renderer.domElement);
+		  window.addEventListener('resize', onWindowResize, false);
+		  window.addEventListener('mousemove', onDocumentMouseMove, false);
+		  //window.addEventListener('mousedown', onDocumentMouseDown, false);
+		  window.addEventListener('mouseup', onDocumentMouseUp, false);
+
+		}
+
+		function onWindowResize() {
+		  var ww = $("#container").innerWidth();
+		  var hh = $("#container").innerHeight();
+
+		  camera.aspect = ww / hh;
+		  camera.updateProjectionMatrix();
+		  renderer.setSize(ww, hh);
+		}
+
+		function onDocumentMouseMove(event) {
+
+		  //event.preventDefault();
+
+		  var viewportPos = $('#container').get(0).getBoundingClientRect();
+		  mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+		  mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+
+		  raycaster.setFromCamera(mouse, camera);
+		  var intersects = raycaster.intersectObject(pickplane);
+		  if (intersects.length > 0) {
+			mesh.position.copy(intersects[0].point);
+			if (mesh.geometry.type == "BoxGeometry")
+			  mesh.position.y = cubey / 2;
+			else if (mesh.geometry.type == "SphereGeometry")
+			  mesh.position.y = radius;
+			else if (mesh.geometry.type == "CylinderGeometry")
+			  mesh.position.y = cylh / 2;
+		  }
+		}
+
+		function onDocumentMouseUp(event) {
+
+		  //event.preventDefault();
+
+		  var viewportPos = $('#container').get(0).getBoundingClientRect();
+		  mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+		  mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+
+		  raycaster.setFromCamera(mouse, camera);
+		  var intersects = raycaster.intersectObject(pickplane);
+		  if (intersects.length > 0) {
+			mesh.position.copy(intersects[0].point);
+			if (mesh.geometry.type == "BoxGeometry")
+			  buildCube(cubex, cubey, cubez, intersects[0].point, colorM);
+			else if (mesh.geometry.type == "SphereGeometry")
+			  buildSphere(radius, intersects[0].point, colorM);
+			else if (mesh.geometry.type == "CylinderGeometry")
+			  buildCylinder(cylt, cylb, cylh, intersects[0].point, colorM);
+		  }
+		}
+
+		function animate() {
+		  //console.log($('#s1'));
+		  if($('#x').val() > 300)$('#x').val(300);
+		  if($('#y').val() > 300)$('#y').val(300);
+		  if($('#z').val() > 300)$('#z').val(300);
+		  
+		  if($('#t').val() > 100)$('#t').val(100);
+		  if($('#b').val() > 100)$('#b').val(100);
+		  if($('#h').val() > 100)$('#h').val(100);
+		  
+		  $('#radiusPrint').text($('#radius').val());
+		  radius = $('#radius').val();
+		  
+		  if(turn){
+				controls.enabled = false;
+			$('#lock').text("Screen Lock");
+			$('#lock').css('color', "rgb(179, 36, 0)");
+		  }else{
+			controls.enabled = true;
+			$('#lock').text("Screen Unlock");
+			$('#lock').css('color', "rgb(0, 179, 0)");
+			}
+		  
+		  if (mesh.geometry.type == "BoxGeometry"){
+			mesh.position.y = cubey / 2;
+			mesh.geometry = new THREE.BoxGeometry(cubex, cubey, cubez);
+		  }else if (mesh.geometry.type == "SphereGeometry"){
+			mesh.position.y = radius;
+			mesh.geometry = new THREE.SphereGeometry(radius, 32, 32);
+		  }else if (mesh.geometry.type == "CylinderGeometry"){
+			mesh.position.y = cylh / 2;
+			mesh.geometry = new THREE.CylinderGeometry(cylt, cylb, cylh, 32);
+			}
+		  
+			
+		  if(document.getElementById("red").checked){
+			mesh.material.color = new THREE.Color(0xff0000);
+			colorM = new THREE.Color(0xff0000);
+		  }
+		  
+		  controls.update();
+		  requestAnimationFrame(animate);
+		  render();
+		}
+
+		function render() {
+		  renderer.render(scene, camera);
+		}
+
+	</script>
+</body>
+
+</html>

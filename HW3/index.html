@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+	#info {
+	  position: absolute;
+	  top: 0px;
+	  width: 100%;
+	  height: 100%;
+	  padding: 10px;
+	  text-align: center;
+	  color: #22cc22
+	}
+
+	div.tip {
+	  align: center;
+	  width: 60vw;
+	  height: auto;
+	  background-color: #333333;
+	  border: 1px solid black;
+	  opacity: 0.4;
+	  filter: alpha(opacity=60);
+	  /* For IE8 and earlier */
+	}
+
+	div.tip span {
+	  font-size: 5vh;
+	  height: 100%;
+	  font-weight: bold;
+	  color: #ffffff;
+	}
+
+	div.pause {
+	  position: absolute;
+	  left: 20vw;
+	  top: 40vh;
+	  width: 60vw;
+	  height: 30vh;
+	  opacity: 0.8;
+	  background-color: #333333;
+	}
+
+	div.pause span {
+	  position: relative;
+	  left: 2%;
+	  top: 8%;
+	  width: 80%;
+	  height: 75%;
+	  font-size: 20px;
+	  font-weight: bold;
+	  color: #ffffff;
+	}
+
+	div.pause input {
+	  position: relative;
+	  left: 2%;
+	  top: 25%;
+	  width: 30%;
+	  height: 15%;
+	}
+
+	div.transbox {
+	  align: center;
+	  width: 80vw;
+	  height: 20vh;
+	  margin-bottom: 10px;
+	  margin-top: 70vh;
+	  margin-left: 10vw;
+	  margin-right: 10vw;
+	  background-color: #555555;
+	  border: 1px solid black;
+	  opacity: 0.4;
+	  filter: alpha(opacity=60);
+	  /* For IE8 and earlier */
+	}
+
+	div.transbox marquee {
+	  font-size: 20px;
+	  height: 100%;
+	  font-weight: bold;
+	  color: #ffffff;
+	}
+
+	div.show {
+	  float: right;
+	  height: 20vh;
+	  width: 20vw;
+	  background-color: #333333;
+	  opacity: 0.4;
+	  margin: 20px;
+	}
+
+	div.show img {
+	  height: 100%;
+	  width: 100%;
+	}
+
+	body {
+	  overflow: hidden;
+	}
+
+	mouse {
+	  cursor: crosshair;
+	}
+
+</style>
+</head>
+
+<body> 
+	<div id="info">
+	  <div class="tip">
+		<span float="center">P: pause | WASD: move | 1-5: select pic</span>
+	  </div>
+	  <div class="show" id="sh">
+		<img id="hand">
+	  </div>
+	  <div class="pause" id="pause">
+		<span id="msg">Press P to continue<br>or<br>Select mode<br></span>
+		<input type="button" id="VisitMode" value="Visit Mode">&nbsp;&nbsp;&nbsp;
+		<input type="button" id="GameMode" value="Game Mode">
+	  </div>
+	  <div class="transbox">
+		<marquee id="talk" behavior="scroll" direction="up" scrollamount="2"></marquee>
+	  </div>
+	</div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r83/three.min.js"></script>
+	<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+	<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<script src="https://rawgit.com/jyunming-chen/tutsplus/master/js/text2D.js"></script>
+	<script src="https://momowu910.github.io/JSFile/FirstPersonControls.js"></script>
+
+	
+	<script>
+		var text1 = "《吶喊The Scream ( The Cry )》- 孟克 Munch Edvard(1893)<br><br>" +
+		  "&nbsp;&nbsp;孟克一生中最重要的一組作品是以吟誦生命、愛情和死亡為題材的組畫，其中又以「吶喊」這幅畫最具代表性。<br>" +
+		  "在這幅畫上，沒有任何具象物體暗示正在發出尖叫聲，只見中央有一個令人毛骨悚然的孤獨人形，似乎正從我們身邊走過。<br>" +
+		  "他捂著耳朵，幾乎聽不見那兩個遠去的行人的腳步聲，也看不見遠方的兩隻小船和教堂的尖塔。<br>" +
+		  "這一完全與現實隔離了的孤獨者所呈現的變形、扭曲的尖叫面孔、圓睜的雙眼和凹陷的臉頰，使人想到了與死亡相聯繫的骷髏。";
+		var text2 = "《拾穗Les Gleanuses Salon (The Gleaners)》- 米勒 Millet Jean Francois(1857)<br><br>" +
+		  "&nbsp;&nbsp;米勒的作品中常以人物為中心，「拾穗」就充分將農民農忙的景致呈現出來。<br>" +
+		  "在畫面中，冷調、金黃的光線 賦予人物一種崇高的意像，也賦予農民形象一種英雄史詩般的角色。<br>" +
+		  "米勒在畫作中初次使用寫實主義的手法，可以見諸收割之後一望無垠的稻田中站立的三個人。其簡潔紮實的 素描功力，及風景處理上對於不必要部份的省略之點特別引人注目。馬車、馬、房子、樹木、雜草等的背景及其間所見的小人影，乃是此一廣大的勞動場面所不可或缺的成份。 ";
+		var text3 = "《蒙娜麗莎The Mona Lisa (La Gioconda)》- 達文西 Leonardo Da Vinci(1503-06)<br><br>" +
+		  "&nbsp;&nbsp;1503 至 1506 年間創作的「蒙娜麗莎」，它除了以傾城佳人出名之外，同時是肖像畫作的一種典型代表，更表現了高度的油畫技巧，尤其是以其背景的暈塗效果，和蒙娜麗莎臉部及手部的明暗處理方式，全畫籠罩在一種舒適，靜謚的氣氛之中。<br>" +
+		  "&nbsp;&nbsp;這幅肖像花了達文西四年的時間，當他完成這幅肖像之後，不願把它交給佐貢多（蒙娜麗莎的丈夫）或其他任何人。當他受到法國國王的邀請時，便帶著這幅肖像離開意大利去了法國。達文西是在法國去世的，這就是為什麼這幅畫會在法國的緣故。<br>" +
+		  "這幅以神祕氛圍的山岳風光為背景的佛羅倫斯女子肖像，可以說是肖像畫中的極品。達文西彷彿在畫中注入了生命，如今這幅畫的色澤已黯淡，也出現了裂痕，被污垢及一層漆覆蓋著，但是仍可以令人感受到達文西繪畫技法的深厚功力。 <br><br>" +
+		  "&nbsp;&nbsp;十五世紀之前，在義大利畫肖像畫幾乎都是描繪側面，能表現出生命氣息的作品比較少，原因之一是受到羅馬錢幣上側面肖像畫的影響。最初會訂購肖像畫的人，只限於財力豐厚、地位崇高的階級，他們所要求的是要能彰顯個人權力的畫像，但是到了十五世紀的時候，肖像畫開始在富裕的商賈階層中普遍起來，這些新興的藝術贊助人比較不喜歡呆板而制式化的姿勢，而偏好能傳達畫中人個性的正面肖像畫。<br>" +
+		  "達文西運用了一種暈塗法，也就是將透明的油彩層層塗上，使底層色彩的明暗界線逐漸模糊，同時他也去掉礙眼的輪廓線，讓人物柔和的浮現出來。蒙娜麗莎的微笑永遠帶著一層柛秘的面紗，是因為她那微微翹起的嘴角左右不太平均，嘴唇的輪廓不清晰所致，加上暈塗法使光與影微妙的融合，成功地顯出獨特的效果。 <br><br>" +
+		  "&nbsp;&nbsp;蒙娜麗莎的眼神非常的優美、溫柔，帶著股深不可測的意味看向前方。不過若仔細看收藏在羅浮宮的這幅畫，她既沒有睫毛，也沒有眉毛。這或許是因為考量到當時佛羅倫斯所流行剃眉的美容術，於是便將眉毛和睫毛都修掉了。她的右手輕輕地搭在左手上，姿勢十分優雅，也流露她平和、沉穩的心境。這個手臂和手的姿勢，使身體形成一個安定的三角形構圖，引導觀者的目光隨著她的周遭而轉動，益顯畫面的動態感。<br>" +
+		  "襯托蒙娜麗莎優雅姿態的背景，則是一片廣漠荒涼的山岳風景。比起她面部精細地描繪，背景的筆觸就顯得輕快多了。達文西對偏好描繪散發神柲氣息而動人的自然景觀，因此在這幅畫中，除了中景部份蜿蜒的道路和橋樑之外，其餘則完全不像是真實世界的景緻。";
+		var text4 = "《星夜The Starry Night》- 梵谷 Vincent Van Gogh(1889)<br><br>" +
+		  "&nbsp;&nbsp;梵谷的線條充滿強烈的力量，一筆線條緊接著一筆線條，猶如雕刻家的作品一樣強烈及清晰。在這幅名為《星夜》的畫中，畫面上的線條差不多一樣的粗細，一排排地列在山上，像從左邊向右邊進行，帶來動勢的感覺。<br>" +
+		  "這些線條，除了房屋及高聳入雲的教堂外，都是這樣的，並且向後曲捲著，越捲越高。畫面左邊的是插入天空的絲柏，伸向天際，象徵著梵谷患了精神病的孤寂靈魂。<br>" +
+		  "&nbsp;&nbsp;畫面下方是聖雷米的街景，沈睡在深夜裡。畫面上方則是藍色的寧靜星空，佔了畫面三分之二的位置。看來有如太陽一般發出強烈光線的月亮，與閃爍的十一顆星星，浮現在夜空中，雲彩像漩渦。梵谷的星空，不只是自然現象的形象化，而是他的幻想與意志的顯現。 <br>" +
+		  "梵谷所畫的月亮及星群都具有眩人的光彩，閃耀在天空，他用極鮮艷的線條，使月亮及每一顆星星旋轉著，連接著，表示它們正在橫越銀河。";
+		var text5 = "Smoke weed every day like Mona Lisa<br><br>" + "&nbsp;&nbsp;藝術大姊大壓力也是很大的。";
+		var text6 = "Fionalisa<br><br>" + "&nbsp;&nbsp;費歐娜麗莎";
+		var text7 = "Mona haircut!<br><br>" + "&nbsp;&nbsp;蒙娜理髮";
+		var text8 = "Shoot machine Mona<br><br>" + "&nbsp;&nbsp;拍貼女神";
+		var text9 = "Beannalisa<br><br>" + "&nbsp;&nbsp;豆豆小姐的微笑";
+		var text10 = "Lisa With Iphone<br><br>" + "&nbsp;&nbsp;:再讓我拍一張就好!";
+		var text11 = "Bodybuilding<br><br>" + "&nbsp;&nbsp;我體脂跟大雄的成績一樣低";
+		var text12 = "Don't move!<br><br>" + "&nbsp;&nbsp;OS:寶貝你不要動我們在畫畫!";
+		var text13 = "I'm watching you!<br><br>" + "&nbsp;&nbsp;我有穿鼻環";
+		var text14 = "I have a pen~<br><br>" + "&nbsp;&nbsp;I have an apple!";
+
+		var text15 = "I'm so hungry~~<br><br>" + "&nbsp;&nbsp;中指:他太像甜不辣了<br>無名指:下一個就是我了!!!<br>小指:還好我沒剪頭髮";
+		var text16 = "Cycle<br><br>" + "&nbsp;&nbsp;就叫你喝水了，你看現在你還想喝嗎";
+		var text17_1 = "WaitWaitWait!<br><br>";
+		var text17_2 = "OhOh<br><br>";
+		var text17_3 = "Why~~~~~<br><br>";
+		var text18 = "But first<br><br>" + "&nbsp;&nbsp;Let me take a selfie";
+		var text19 = "Yap<br><br>" + "&nbsp;&nbsp;貓奴在此";
+		var text20 = "Holy ShXt!<br><br>";
+		var text21 = "Booty Booty Booty!<br><br>" + "&nbsp;&nbsp;那我就不客氣囉";
+		var text22 = "Shut up!!!!!!!!<br><br>" + "&nbsp;&nbsp;:你們知道這傢伙在畫裡的世界有多吵嗎?";
+		var text23 = "I have no friend<br><br>" + "&nbsp;&nbsp;沒關係我自己來";
+		var text24 = "Food Food Food!<br><br>" + "&nbsp;&nbsp;那我也不客氣囉";
+		var text25 = "《傑克島的星期天下午 A Sunday on La Grande Jatte》- 秀拉 Seurat Georges(1884)<br><br>" +
+		  "&nbsp;&nbsp;這幅是新印象派的一個範本，秀拉為了製作這幅巨作，花了兩年的時間，四百多幅的素描稿和顏色效果圖，為的是讓顏色更準確。<br>" +
+		  "這幅畫描寫的是巴黎附近阿尼埃爾的傑克島（或譯大傑特島、大碗島）上一個晴朗的日子，遊人們在陽光下聚集在河濱的樹林間休息。有的散步，有的斜臥在草地上，有的在河邊垂釣。<br>" +
+		  "&nbsp;&nbsp;前景上一大塊暗綠色調表示陰影，中間夾著一塊黃色調子的亮部，顯現出午後的強烈的陽光，草地為黃綠色。陽光透過了樹林，而投射在草地上的陰影，被色彩強調得界限分明。赤色、白色的衣服、陽傘和草地都現出一種好像散發蒸氣一般的黃色。<br>" +
+		  "色點彼此交錯呼應，給人以一種裝飾地毯的效果。畫上的人物也畫得很可笑，一個個看不清面孔和五官，連輪廓本身也都被小圓點弄得模糊不清了，似乎所有事物都是影影綽綽的。<br>" +
+		  "&nbsp;&nbsp;此畫的整個創作過程約分四個步驟：以素描佈置明暗對比；以色彩寫生；以寫生為基礎組織背景；以色點完成正稿。在畫面上一共有四十個人物，每一個人物都是畫家經過很仔細的構圖而成。它們好像彼此沒有關係地擺在一起，但畫面上卻充滿著一種寧靜的秩序美。";
+		var text26 = "MonaLEGO<br><br>" + "&nbsp;&nbsp;樂高麗莎";
+		var text27 = "Can we stop this shXt thing?<br><br>" + "&nbsp;&nbsp;馮娜麗莎";
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		$('#VisitMode').click(function() {
+			$('#win').hide();
+			show = 0;
+		  stop = false;
+		  while (scene.children.length > 0) {
+			scene.remove(scene.children[0]);
+		  }
+		  pickables = [];
+			planes = [];
+		  picAccount = 0;
+		  reset(0);
+		  $('#hand').attr("src", hand[show].image.currentSrc);
+
+		});
+		$('#GameMode').click(function() {
+			$('#win').hide();
+			show = 0;
+		  stop = false;
+		  while (scene.children.length > 0) {
+			scene.remove(scene.children[0]);
+		  }
+		  pickables = [];
+			planes = [];
+		  picAccount = 0;
+		  reset(1);
+		  $('#hand').attr("src", hand[show].image.currentSrc);
+		});
+
+		var camera, scene, renderer, mesh, controls, controls2;
+		var light, aLight1, aLight2, floor;
+
+		var loader = new THREE.TextureLoader();
+
+		var picDoor, picDoor_B;
+
+		var textureF, textureCeiling;
+		var textureW, textureW_B;
+		var textureC, textureC_B;
+		var textureC2, textureC_B2;
+		var textures = [];
+
+		var way, way2, way3, way4;
+		var ceiling, ceiling2, ceiling3;
+		var planeDoor;
+
+		var pic1, pic2, pic3, pic4, pic5, pic6, pic7, pic8, pic9, pic10;
+		var pic11, pic12, pic13, pic14, pic15, pic16, pic17, pic17_1, pic17_2, pic17_3, pic18, pic19, pic20;
+		var pic21, pic22, pic23, pic24, pic25, pic26, pic27;
+
+		var raycaster;
+		var house = new THREE.Object3D();
+		var walls = [];
+		var couch = new THREE.Object3D();
+		var couchs = [];
+
+		var mouse = new THREE.Vector2();
+		var pickables = [];
+		var planes = [];
+		var keyboard = new KeyboardState();
+
+		var lamps = [],
+		  targets = [],
+		  sLights = [],
+		  pLights = [];
+
+		var turn = true,
+		  stop = false,
+		  hide = false,
+		  lightButton, lightButtonP;
+		var sofa, which = new THREE.Object3D();
+
+		var clock = new THREE.Clock();
+
+		var show, hand = [];
+		var man, gameover, gamemode = 0, picAccount = 0;
+
+		function buildWalls(x, y, z, px, py, pz) {
+
+		  var wall = new THREE.Mesh(new THREE.BoxGeometry(x, y + 50, z), new THREE.MeshPhongMaterial({
+			map: textureW,
+			bumpMap: textureW_B,
+			bumpScale: 0.5,
+			side: THREE.FrontSide
+		  }));
+		  wall.position.set(px, py + 25, pz);
+		  house.add(wall);
+
+		  walls.push(wall);
+		}
+
+		function buildCouch(px, py, pz) {
+		  var cGeometry = new THREE.CylinderGeometry(30, 30, 10, 32, 32);
+		  var cMaterial = new THREE.MeshPhongMaterial({
+			map: textureC,
+			bumpMap: textureC_B,
+			bumpScale: 0.8,
+			side: THREE.DoubleSide
+		  });
+		  sofa = new THREE.Mesh(cGeometry, cMaterial);
+		  sofa.position.set(px, py, pz);
+		  couch.add(sofa);
+
+		  sofa.name = 'sofa';
+		  pickables.push(sofa);
+
+		  var tgGometry = new THREE.TorusGeometry(30, 5, 32, 100);
+		  var tMaterial = new THREE.MeshLambertMaterial({
+			map: textureC2,
+			side: THREE.DoubleSide
+		  });
+		  var torus = new THREE.Mesh(tgGometry, tMaterial);
+		  torus.position.set(px, py, pz);
+		  torus.rotation.x = -Math.PI / 2;
+		  couch.add(torus);
+
+		  var sGeometry = new THREE.BoxGeometry(5, 20, 5);
+		  var sMaterial = new THREE.MeshLambertMaterial({
+			color: 0xb3b3b3
+		  });
+		  var support = new THREE.Mesh(sGeometry, sMaterial);
+		  support.position.set(px - 25, py - 10, pz);
+		  couch.add(support);
+
+		  sup2 = support.clone();
+		  sup2.position.set(px + 25, py - 10, pz);
+		  couch.add(sup2);
+		  sup3 = support.clone();
+		  sup3.position.set(px, py - 10, pz - 25);
+		  couch.add(sup3);
+		  sup4 = support.clone();
+		  sup4.position.set(px, py - 10, pz + 25);
+		  couch.add(sup4);
+
+		  scene.add(couch);
+		  couchs.push(sofa);
+
+		  couch.traverse(
+			function(mesh) {
+			  if (mesh instanceof THREE.Mesh) {
+				mesh.castShadow = true;
+			  }
+			}
+		  );
+		}
+
+		function buildPlane(w, h, x, y, z, r, pic) {
+
+		  var pGeometry = new THREE.PlaneGeometry(w, h, 32);
+		  var pMaterial = new THREE.MeshLambertMaterial({
+			color: 0xffffff,
+			map: pic
+		  });
+		  pMaterial.needsUpdate = true;
+		  var plane = new THREE.Mesh(pGeometry, pMaterial);
+		  scene.add(plane);
+		  plane.position.set(x, y, z);
+		  plane.rotation.y = Math.PI / r;
+
+		  plane.name = 'plane';
+
+		  planes.push(plane);
+
+		}
+
+		function buildLamp() {
+		  var lampModel = new THREE.Object3D();
+		  var layer2 = new THREE.Object3D();
+		  var lamp = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 10, 32),
+			new THREE.MeshLambertMaterial({
+			  color: 0x000000,
+			  transparent: true,
+			  opacity: 0.8
+			}));
+		  layer2.add(lamp);
+		  lampModel.add(layer2);
+		  lamp.position.y = 10;
+		  layer2.rotation.x = Math.PI / 2;
+		  return lampModel;
+		}
+
+		function setLight(x, y, z, target) {
+		  var spotLight = new THREE.SpotLight(0xffffff, 0.8);
+
+		  spotLight.castShadow = true;
+		  spotLight.position.set(x, y, z);
+		  spotLight.angle = 0.25;
+		  spotLight.penumbra = 0.5;
+		  spotLight.distance = 500;
+		  spotLight.decay = 2;
+
+
+		  var lamp2 = buildLamp();
+		  lamps.push(lamp2); //
+		  scene.add(lamp2);
+		  lamp2.position.copy(spotLight.position);
+		  sLights.push(spotLight);
+		  spotLight.target = target;
+		  targets.push(target); //
+
+		}
+
+		function buildTexturedFace(url) {
+
+		  var loader = new THREE.TextureLoader();
+		  loader.setCrossOrigin('');
+
+		  loader.load(url);
+		  return loader;
+
+		}
+
+		function reset(mode) {
+			camera.position.set(0, 65, 0);
+		  gamemode = mode;
+		  picAccount = 0;
+		  
+		  scene.add(camera);
+		  scene.add(light2);
+		  scene.add(aLight1);
+		  scene.add(floor);
+
+		  /////////////////////////////////////////////////////////////////////Walls////////
+
+		  buildWalls(10, 150, 360, 0, 0, 0); //0
+		  buildWalls(160, 150, 10, 85, 0, -175); //1
+		  buildWalls(160, 150, 10, 85, 0, 175); //2
+		  buildWalls(10, 150, 99, 170, 0, -130); //3
+		  buildWalls(10, 150, 99, 170, 0, 130); //4
+
+		  buildWalls(249, 150, 10, 290, 0, -85); //5
+		  buildWalls(249, 150, 10, 290, 0, 85); //6
+
+		  buildWalls(10, 150, 169, 410, 0, -165); //7
+		  buildWalls(10, 150, 169, 410, 0, 165); //8
+		  buildWalls(220, 150, 10, 525, 0, -245); //9
+		  buildWalls(240, 150, 10, 535, 0, 245); //10
+		  buildWalls(220, 150, 10, 785, 0, -245); //11
+		  buildWalls(240, 150, 10, 775, 0, 245); //12
+		  buildWalls(10, 150, 500, 900, 0, 0); //13
+
+		  buildWalls(150, 150, 10, 550, 0, -85); //14
+		  buildWalls(150, 150, 10, 550, 0, 85); //15
+		  buildWalls(150, 150, 10, 760, 0, -85); //16
+		  buildWalls(150, 150, 10, 760, 0, 85); //17
+
+		  buildWalls(40, 150, 10, 655, 0, -245); //18
+		  walls[18].name = 'secret';
+
+		  house.position.set(-495, 75, 0);
+		  scene.add(house);
+		  //////////////////////////////////////////////////////////////////////////Couchs////////
+		  buildCouch(55, 20, -165); //1
+		  buildCouch(265, 20, -165); //2
+		  buildCouch(55, 20, 165); //3
+		  buildCouch(265, 20, 165); //4
+		  buildCouch(-410, 20, 85); //5
+		  buildCouch(-410, 20, -85); //6
+		  buildCouch(160, 20, 0); //7
+
+		  light2.target = couchs[6];
+		  hand.splice(0, 5);
+		  hand.push(pic12, pic13, pic14, pic26, pic27);
+
+		  //////////////////////////////////////////////////////////////////////////////////////Plane//////////
+
+		  buildPlane(70, 70, -489.5, 65, 0, 2, pic1); //0
+		  buildPlane(50, 50, -410, 65, -169.5, 1 / 2, pic5); //1
+		  buildPlane(50, 70, -410, 65, 169.5, -1, pic6); //2
+
+		  buildPlane(85, 55, -79.5, 65, -165, 2, pic2); //7
+		  buildPlane(55, 65, -79.5, 65, 165, 2, pic7); //8
+
+		  buildPlane(80, 65, 0, 65, -239.5, 1 / 2, pic22); //9
+		  buildPlane(49, 70, 90, 65, -239.5, 1 / 2, pic9); //9
+		  buildPlane(60, 85, 0, 65, 239.5, -1, pic23); //10
+		  buildPlane(60, 85, 90, 65, 239.5, -1, pic3); //10
+		  buildPlane(38, 50, 220, 65, -239.5, 1 / 2, pic17_1); //11
+		  buildPlane(26, 50, 260, 65, -239.5, 1 / 2, pic17_2); //11
+		  buildPlane(38, 50, 300, 65, -239.5, 1 / 2, pic17_3); //11
+
+		  buildPlane(60, 45, 240, 65, 239.5, -1, pic8); //12
+		  buildPlane(50, 41, 320, 65, 239.5, -1, pic15); //12
+
+		  buildPlane(50, 75, 399.5, 65, -160, -2, pic11); //13
+		  buildPlane(80, 55, 399.5, 65, 160, -2, pic25); //13
+
+		  buildPlane(50, 53, 55, 65, -91.5, -1, pic16); //14
+		  buildPlane(50, 50, 55, 65, -79.5, 1 / 2, pic10); //14
+		  buildPlane(50, 55, 55, 65, 79.5, -1, pic18); //15
+		  buildPlane(50, 65, 55, 65, 91.5, 1 / 2, pic19); //15
+
+		  buildPlane(100, 60, 265, 30, -91.5, -1, pic20); //16
+		  buildPlane(66, 45, 265, 65, -79.5, 1 / 2, pic21); //16
+
+		  buildPlane(80, 50, 265, 65, 79.5, -1, pic4); //17
+		  buildPlane(66, 45, 265, 65, 91.5, 1 / 2, pic24); //17
+
+		  //////////////////////////////////////////////////////////////////////////////////////Spotlights//////////
+
+		  setLight(-410, 200, 0, planes[0]);
+		  setLight(-410, 200, -110, planes[1]);
+		  setLight(-410, 200, 110, planes[2]);
+
+		  setLight(-20, 200, -165, planes[3]);
+		  setLight(-20, 200, 165, planes[4]);
+
+		  setLight(0, 200, -165, planes[5]);
+		  setLight(90, 200, -165, planes[6]);
+
+		  setLight(0, 200, 165, planes[7]);
+		  setLight(90, 200, 165, planes[8]);
+
+		  setLight(220, 200, -165, planes[9]);
+		  setLight(260, 200, -165, planes[10]);
+		  setLight(320, 200, -165, planes[11]);
+
+		  setLight(240, 200, 165, planes[12]);
+		  setLight(320, 200, 165, planes[13]);
+
+		  setLight(340, 200, -165, planes[14]);
+		  setLight(340, 200, 165, planes[15]);
+
+		  setLight(55, 200, -165, planes[16]);
+		  setLight(55, 200, 0, planes[17]);
+
+		  setLight(55, 200, 0, planes[18]);
+		  setLight(55, 200, 165, planes[19]);
+
+		  setLight(265, 200, -165, planes[20]);
+		  setLight(265, 200, 0, planes[21]);
+
+		  setLight(265, 200, 0, planes[22]);
+		  setLight(265, 200, 165, planes[23]);
+
+		  //////////////////////////////////////////////////////////////
+
+		  scene.add(way, way2, way3, way4);
+
+		  scene.add(ceiling);
+		  scene.add(ceiling2);
+		  scene.add(ceiling3);
+		  scene.add(lightButtonP);
+		  scene.add(lightButton);
+
+		  scene.add(planeDoor);
+
+		  planes.push(planeDoor);
+		  for (var i = 0; i < 25; i++) {
+			pickables.push(planes[i]);
+		  }
+		  pickables.push(walls[18]);
+		}
+
+		init();
+		animate();
+
+		function init() {
+
+		  scene = new THREE.Scene();
+
+		  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+		  camera.position.y = 1000; //65
+
+		  renderer = new THREE.WebGLRenderer({
+			antialias: true
+		  });
+		  renderer.setSize(window.innerWidth, window.innerHeight);
+		  renderer.setClearColor(0x888888);
+
+		  controls2 = new THREE.OrbitControls(camera, renderer.domElement);
+		  controls = new THREE.FirstPersonControls(camera);
+		  controls.movementSpeed = 100;
+		  controls.lookSpeed = 0.25;
+		  controls.lookVertical = true;
+		  controls.constrainVertical = true;
+		  controls.verticalMin = 1.1;
+		  controls.verticalMax = 2.5;
+
+		  ///////////////////////////////////////////////////////////////////////texture//////////
+
+		  loader.setCrossOrigin('');
+
+		  textureCeiling = loader.load('http://i.imgur.com/grtTrjq.jpg');
+		  textureF = loader.load('http://i.imgur.com/jzeYtmp.jpg');
+
+		  textureW = loader.load('http://i.imgur.com/grtTrjq.jpg');
+		  textureW_B = loader.load('http://i.imgur.com/aPjvn6s.jpg');
+
+		  textureC = loader.load('http://i.imgur.com/OZl79fc.jpg?1');
+		  textureC_B = loader.load('http://i.imgur.com/ZqUxX9V.jpg?1');
+
+		  textureC2 = loader.load('http://i.imgur.com/hmF4Zcr.jpg');
+		  textureC_B2 = loader.load('http://i.imgur.com/zeFvdoX.jpg');
+
+		  textures.push(textureCeiling, textureF, textureW, textureW_B, textureC, textureC_B, textureC2, textureC_B2);
+		  //////////////////////////////////////////////////////////////////////////Light///////////////////////////////
+
+		  var lcolor = 0xffd9b3;
+
+		  light2 = new THREE.DirectionalLight(lcolor, 0.8);
+		  light2.position.set(0, 500, 0);
+		  light2.castShadow = true;
+		  light2.shadow.camera.left = -1000;
+		  light2.shadow.camera.top = -1000;
+		  light2.shadow.camera.right = 1000;
+		  light2.shadow.camera.bottom = 1000;
+		  light2.shadow.camera.near = 1;
+		  light2.shadow.camera.far = 1000;
+
+		  light2.shadow.mapSize.width = light2.shadow.mapSize.height = 1024;
+		  light2.shadow.bias = -.0001
+
+		  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+		  aLight1 = new THREE.AmbientLight(0xbbbbbb); // soft white light
+		  aLight2 = new THREE.AmbientLight(0x555555); // soft white light
+
+		  var gridXZ = new THREE.GridHelper(1000, 100, 'red', 'white');
+		  //scene.add(gridXZ);
+
+		  floor = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 100, 100),
+			new THREE.MeshPhongMaterial({
+			  color: 0xbbbbbb,
+			  map: textureF
+			}));
+
+		  floor.rotation.x = -Math.PI / 2;
+
+		  ////////////////////////////////////////////////////////////////////
+
+		  renderer.shadowMap.enabled = true;
+		  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+		  floor.receiveShadow = true;
+
+		  ////////////////////////////////////////////////////////////////////////
+		  document.body.appendChild(renderer.domElement);
+
+		  raycaster = new THREE.Raycaster();
+		  raycaster.far = 100;
+		  raycasterMan = new THREE.Raycaster();
+		  raycasterMan.far = 100;
+		  //document.addEventListener('mousedown', onDocumentMouseDown, false);
+		  document.addEventListener('mousemove', onDocumentMouseMove, false);
+		  //controls.domElement.removeEventListener( 'mousedown', controls.onMouseDown(), false );
+		  controls.dispose();
+
+
+		  /////////////////////////////////////////////////////////////////////////////////pics/////////
+
+		  pic1 = loader.load('http://i.imgur.com/2lotV0R.jpg'); //f
+		  pic2 = loader.load('http://i.imgur.com/OuUbAjW.jpg'); //f
+		  pic3 = loader.load('http://i.imgur.com/wsTStVp.jpg'); //f
+		  pic4 = loader.load('http://i.imgur.com/JtapUJ3.jpg'); //f
+		  pic5 = loader.load('http://i.imgur.com/ehNiK5C.jpg');
+
+		  pic6 = loader.load('http://i.imgur.com/3Jc5coF.jpg');
+		  pic7 = loader.load('http://i.imgur.com/DWBfDj2.jpg');
+		  pic8 = loader.load('http://i.imgur.com/6w5DZ1d.jpg');
+		  pic9 = loader.load('http://i.imgur.com/kVOIDmz.jpg');
+		  pic10 = loader.load('http://i.imgur.com/427tDSJ.jpg?1');
+
+		  pic11 = loader.load('http://i.imgur.com/xDrZWl0.jpg');
+		  pic12 = loader.load('http://i.imgur.com/nzldOQY.jpg'); //c
+		  pic13 = loader.load('http://i.imgur.com/eiQW9Qt.jpg'); //c
+		  pic14 = loader.load('http://i.imgur.com/8EUDzHQ.jpg'); //c
+		  pic15 = loader.load('http://i.imgur.com/B0fypto.jpg');
+
+		  pic16 = loader.load('http://i.imgur.com/xAxhCZU.jpg');
+		  pic17 = loader.load('http://i.imgur.com/ylnMOem.jpg'); //
+		  pic17_1 = loader.load('http://i.imgur.com/mz5rfrR.jpg');
+		  pic17_2 = loader.load('http://i.imgur.com/Tf17iNF.jpg');
+		  pic17_3 = loader.load('http://i.imgur.com/LK1nBHb.jpg');
+
+		  pic18 = loader.load('http://i.imgur.com/nhufmCC.jpg');
+		  pic19 = loader.load('http://i.imgur.com/G1p7bs1.jpg');
+		  pic20 = loader.load('http://i.imgur.com/K9K7P9n.jpg?1');
+
+		  pic21 = loader.load('http://i.imgur.com/Rm9MEzk.jpg');
+		  pic22 = loader.load('http://i.imgur.com/SpqPXnr.jpg');
+		  pic23 = loader.load('http://i.imgur.com/VHcZATm.jpg');
+		  pic24 = loader.load('http://i.imgur.com/PoKqPbA.jpg');
+		  pic25 = loader.load('http://i.imgur.com/UT6YPwJ.jpg'); //f
+
+		  pic26 = loader.load('http://i.imgur.com/IiwL3dR.jpg'); //c
+		  pic27 = loader.load('http://i.imgur.com/JOAdPpS.jpg'); //c
+		  
+		  textures.push(pic1, pic2, pic3, pic4, pic5, pic6, pic7, pic8, pic9, pic10);
+		  textures.push(pic11, pic12, pic13, pic14, pic15, pic16, pic17, pic17_1, pic17_2, pic17_3, pic18, pic19, pic20);
+		  textures.push(pic21, pic22, pic23, pic24, pic25, pic26, pic27);
+		  //hand.push(pic12, pic13, pic14, pic26, pic27);
+		  picDoor = loader.load('http://i.imgur.com/RmOBydN.jpg');
+		  picDoor_B = loader.load('http://i.imgur.com/hijUxCV.jpg');
+
+		  ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		  var wayG = new THREE.BoxGeometry(5, 5, 220);
+		  var wayG2 = new THREE.BoxGeometry(360, 5, 5);
+		  var wayG3 = new THREE.BoxGeometry(210, 5, 5);
+		  var wayM = new THREE.MeshPhongMaterial({
+			color: 0x000000,
+			side: THREE.FrontSide
+		  });
+		  way = new THREE.Mesh(wayG, wayM);
+		  way2 = new THREE.Mesh(wayG2, wayM);
+		  way3 = new THREE.Mesh(wayG2, wayM);
+		  way4 = new THREE.Mesh(wayG3, wayM);
+		  way.position.set(-410, 200, 0);
+		  way2.position.set(160, 200, 165);
+		  way3.position.set(160, 200, -165);
+		  way4.position.set(160, 200, 0);
+
+		  //////////////////////////////////////////////////////////////////////////////////ceiling//////////////////////
+		  ceiling = new THREE.Mesh(new THREE.BoxGeometry(500, 10, 500), new THREE.MeshPhongMaterial({
+			map: textureCeiling,
+			side: THREE.FrontSide
+		  }));
+		  ceiling.position.set(160, 205, 0);
+
+		  ceiling2 = new THREE.Mesh(new THREE.BoxGeometry(230, 10, 180), new THREE.MeshPhongMaterial({
+			map: textureCeiling,
+			side: THREE.FrontSide
+		  }));
+		  ceiling2.position.set(-205, 205, 0);
+		  ceiling3 = new THREE.Mesh(new THREE.BoxGeometry(180, 10, 360), new THREE.MeshPhongMaterial({
+			map: textureCeiling,
+			side: THREE.FrontSide
+		  }));
+		  ceiling3.position.set(-410, 205, 0);
+		  ////////////////////////////////////////////////////////////////////////////////////////turn////////////
+		  lightButtonP = new THREE.Mesh(new THREE.BoxGeometry(8, 10, 2), new THREE.MeshLambertMaterial({
+			color: 0xaaaaaa
+		  }));
+		  lightButtonP.position.set(-110, 70, -80);
+		  lightButton = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 5, 32), new THREE.MeshLambertMaterial({
+			color: 0xffffff
+		  }));
+		  lightButton.rotation.x = Math.PI / 2;
+		  lightButton.position.set(-110, 70, -80);
+		  lightButton.name = 'lightButton';
+		  pickables.push(lightButton);
+
+		  /////////////////////////////////////////////
+		  for (var i = 0; i < textures.length; i++) {
+			textures[i].wrapS = THREE.RepeatWrapping;
+			textures[i].wrapT = THREE.RepeatWrapping;
+		  }
+		  /////////////////////door//////////////////////
+		  var dGeometry = new THREE.PlaneGeometry(80, 100, 32);
+		  var dMaterial = new THREE.MeshPhongMaterial({
+			color: 0xffffff,
+			map: picDoor,
+			side: THREE.DoubleSide
+		  });
+		  planeDoor = new THREE.Mesh(dGeometry, dMaterial);
+		  planeDoor.position.set(399, 50, 0);
+		  planeDoor.rotation.y = -Math.PI / 2;
+
+		  planeDoor.name = 'door';
+		  reset();
+		  gamemode = 0;
+		  $('#win').hide();
+
+		}
+
+		function onDocumentMouseMove(event) {
+		  event.preventDefault();
+		  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+		  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+		  raycaster.setFromCamera(mouse, camera);
+
+		  var intersects = raycaster.intersectObjects(pickables);
+
+		  if (intersects.length > 0 && intersects[0].object.name != 'secret') {
+			document.body.style.cursor = 'pointer';
+
+			if (intersects[0].object.name == 'lightButton') {
+			  $('#talk').text("Press E to Turn light!");
+			}
+
+			if (intersects[0].object.name == 'sofa') {
+			  if (!hide)
+				$('#talk').text("Press E to hide!");
+			  else
+				$('#talk').text("Press E to out!");
+			}
+			///////////////////////////////////////////////////////////////////////////////////////
+			if (intersects[0].object.name == 'plane') {
+			  if (intersects[0].object.material.map.image == pic1.image) $('#talk').html(text1);
+			  if (intersects[0].object.material.map.image == pic2.image) $('#talk').html(text2);
+			  if (intersects[0].object.material.map.image == pic3.image) $('#talk').html(text3);
+			  if (intersects[0].object.material.map.image == pic4.image) $('#talk').html(text4);
+			  if (intersects[0].object.material.map.image == pic5.image) $('#talk').html(text5);
+			  if (intersects[0].object.material.map.image == pic6.image) $('#talk').html(text6);
+			  if (intersects[0].object.material.map.image == pic7.image) $('#talk').html(text7);
+			  if (intersects[0].object.material.map.image == pic8.image) $('#talk').html(text8);
+			  if (intersects[0].object.material.map.image == pic9.image) $('#talk').html(text9);
+			  if (intersects[0].object.material.map.image == pic10.image) $('#talk').html(text10);
+
+			  if (intersects[0].object.material.map.image == pic11.image) $('#talk').html(text11);
+			  if (intersects[0].object.material.map.image == pic12.image) $('#talk').html(text12);
+			  if (intersects[0].object.material.map.image == pic13.image) $('#talk').html(text13);
+			  if (intersects[0].object.material.map.image == pic14.image) $('#talk').html(text14);
+			  if (intersects[0].object.material.map.image == pic15.image) $('#talk').html(text15);
+			  if (intersects[0].object.material.map.image == pic16.image) $('#talk').html(text16);
+			  if (intersects[0].object.material.map.image == pic17_1.image) $('#talk').html(text17_1);
+			  if (intersects[0].object.material.map.image == pic17_2.image) $('#talk').html(text17_2);
+			  if (intersects[0].object.material.map.image == pic17_3.image) $('#talk').html(text17_3);
+			  if (intersects[0].object.material.map.image == pic18.image) $('#talk').html(text18);
+			  if (intersects[0].object.material.map.image == pic19.image) $('#talk').html(text19);
+			  if (intersects[0].object.material.map.image == pic20.image) $('#talk').html(text20);
+
+			  if (intersects[0].object.material.map.image == pic21.image) $('#talk').html(text21);
+			  if (intersects[0].object.material.map.image == pic22.image) $('#talk').html(text22);
+			  if (intersects[0].object.material.map.image == pic23.image) $('#talk').html(text23);
+			  if (intersects[0].object.material.map.image == pic24.image) $('#talk').html(text24);
+			  if (intersects[0].object.material.map.image == pic25.image) $('#talk').html(text25);
+			  if (intersects[0].object.material.map.image == pic26.image) $('#talk').html(text26);
+			  if (intersects[0].object.material.map.image == pic27.image) $('#talk').html(text27);
+			}
+
+		  } else {
+			if(picAccount == 5){
+				$('#talk').text("拿完正確的畫了!快離開這裡!!");
+			}else{
+				if(gamemode == 0){
+					$('#talk').text(" ");
+			  }else if(gamemode == 1){
+				$('#talk').text("你是一名小偷，這個藝廊有5幅正確的畫你要調包，你能正確的判斷嗎?(右上角是你手上有的畫)");
+			  }
+			}
+			document.body.style.cursor = 'crosshair';
+		  }
+		}
+
+		function animate() {
+
+		  requestAnimationFrame(animate);
+		  render();
+		  keyboard.update();
+		  
+		  if(gamemode == 0){
+			$('#sh').hide();
+		  }else if(gamemode == 1){
+			$('#sh').show();
+		  }
+
+		  if (keyboard.down("1")) {
+			show = 0;
+			$('#hand').attr("src", hand[show].image.currentSrc);
+		  }
+		  if (keyboard.down("2")) {
+			show = 1;
+			$('#hand').attr("src", hand[show].image.currentSrc);
+		  }
+		  if (keyboard.down("3")) {
+			show = 2;
+			$('#hand').attr("src", hand[show].image.currentSrc);
+		  }
+		  if (keyboard.down("4")) {
+			show = 3;
+			$('#hand').attr("src", hand[show].image.currentSrc);
+		  }
+		  if (keyboard.down("5")) {
+			show = 4;
+			$('#hand').attr("src", hand[show].image.currentSrc);
+		  }
+
+		  if (keyboard.down("E")) {
+			var intersects = raycaster.intersectObjects(pickables);
+
+			if (intersects.length > 0) {
+			  if (intersects[0].object.name == 'lightButton') {
+				turn = !turn;
+			  }
+
+			  if (intersects[0].object.name == 'sofa') {
+				which = intersects[0].object;
+				if (hide) {
+				  camera.position.set(which.position.x - 50, 65, which.position.z);
+				}
+				hide = !hide;
+				which = intersects[0].object;
+			  }
+					//console.log(pic10);
+			  
+			  if (gamemode == 1) {
+				if (intersects[0].object.name == 'plane') {
+				  if (show != undefined) {
+					var step = pic17;
+					step = hand[show];
+					hand[show] = intersects[0].object.material.map;
+					intersects[0].object.material.map = step;
+					$('#hand').attr("src", hand[show].image.currentSrc);
+					intersects[0].object.material.update();
+				  }
+				}
+
+				if (intersects[0].object.name == 'secret') {
+				  if(picAccount !== 5){
+					  $('#talk').text("收集完正確的五幅畫才能離開!");
+							}if(picAccount == 5){
+					$('#msg').html("You Win!!!<br><br>Select mode<br>");
+							stop = true;
+				  }
+							console.log('win');
+				}
+				if (intersects[0].object.name == 'door') {
+				  if(picAccount !== 5){
+					  $('#talk').text("收集完正確的五幅畫才能離開!");
+				  }if(picAccount == 5){
+					$('#talk').text("從這個門出去是想找死嗎?去找別的門!");
+				  }
+				  console.log('win');
+				}
+			  }
+			}
+		  }
+
+		  if (hide) {
+			camera.position.set(which.position.x, which.position.y - 10, which.position.z);
+		  } else {
+			camera.position.y = 65;
+		  }
+
+
+		  if (keyboard.down("P")) {
+			stop = !stop;
+		  }
+
+		  for (var i = 0; i < 24; i++) {
+			lamps[i].lookAt(targets[i].position);
+			planes[i].material.needsUpdate = true;
+		  }
+
+		  if (turn) { //bright
+			scene.add(aLight1);
+			scene.remove(aLight2);
+
+			light2.intensity = 0.8;
+			renderer.shadowMap.enabled = true;
+
+			for (var i = 0; i < 24; i++) {
+			  scene.remove(sLights[i]);
+			  sLights[i].intensity = 0;
+			}
+
+		  } else { //dark
+			scene.remove(aLight1);
+			scene.add(aLight2);
+
+			light2.intensity = 0;
+			renderer.shadowMap.enabled = false;
+
+			for (var i = 0; i < 24; i++) {
+			  scene.add(sLights[i]);
+			  sLights[i].intensity = 0.8;
+			}
+		  }
+
+		  controls2.dispose();
+		  if (stop) {
+			$('#msg').html("Press P to continue<br>or<br>Select mode<br>");
+			$('#pause').show();
+			controls.enabled = false;
+		  } else {
+			$('#pause').hide();
+			controls.enabled = true;
+		  }
+		  
+			//console.log(picAccount);
+		  if (gamemode == 1) {
+				var c = 0;
+			  for(var i = 0; i < 5; i++){
+				if(hand[i].image == pic1.image){
+					console.log(hand[i].image == pic1.image);
+				  c++;
+				}else if(hand[i].image == pic2.image){
+				  c++;console.log(hand[i].image == pic2.image);
+				}else if(hand[i].image == pic3.image){
+				  c++;console.log(hand[i].image == pic3.image);
+				}else if(hand[i].image == pic4.image){
+				  c++;console.log(hand[i].image == pic4.image);
+				}else if(hand[i].image == pic25.image){
+				  c++;console.log(hand[i].image == pic25.image);
+				}
+				
+			  }
+			  picAccount = c;
+			  if(picAccount < 5){
+				picAccount = 0; 
+			  }
+		  }
+
+		  /////////////////////////////////////////////////collision//////////////////////////////////////
+		  var halfSize = 1;
+		  var dis = 10,
+			pback = 0.1;
+		  var f_vector = new THREE.Vector3(0, 0, -1);
+		  var b_vector = new THREE.Vector3(0, 0, 1);
+		  var l_vector = new THREE.Vector3(-1, 0, 0);
+		  var r_vector = new THREE.Vector3(1, 0, 0);
+
+		  var left = new THREE.Vector3(camera.position.x - halfSize, camera.position.y, camera.position.z);
+		  var right = new THREE.Vector3(camera.position.x + halfSize, camera.position.y, camera.position.z);
+		  var front = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z + halfSize);
+		  var back = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z - halfSize);
+
+		  // front
+		  var left_ray = new THREE.Raycaster(left, f_vector, 0, dis);
+		  var left_intersects = left_ray.intersectObjects(walls);
+		  if (left_intersects.length > 0) {
+			camera.position.z = left_intersects[0].point.z + dis + pback;
+		  }
+		  var right_ray = new THREE.Raycaster(right, f_vector, 0, dis);
+		  var right_intersects = right_ray.intersectObjects(walls);
+		  if (right_intersects.length > 0) {
+			camera.position.z = right_intersects[0].point.z + dis + pback;
+		  }
+
+		  // back
+		  var left_ray = new THREE.Raycaster(left, b_vector, 0, dis);
+		  var left_intersects = left_ray.intersectObjects(walls);
+		  if (left_intersects.length > 0) {
+			camera.position.z = left_intersects[0].point.z - dis - pback;
+		  }
+		  var right_ray = new THREE.Raycaster(right, b_vector, 0, dis);
+		  var right_intersects = right_ray.intersectObjects(walls);
+		  if (right_intersects.length > 0) {
+			camera.position.z = right_intersects[0].point.z - dis - pback;
+		  }
+
+		  // right
+		  var back_ray = new THREE.Raycaster(back, r_vector, 0, dis);
+		  var back_intersects = back_ray.intersectObjects(walls);
+		  if (back_intersects.length > 0) {
+			camera.position.x = back_intersects[0].point.x - dis - pback;
+		  }
+		  var front_ray = new THREE.Raycaster(front, r_vector, 0, dis);
+		  var front_intersects = front_ray.intersectObjects(walls);
+		  if (front_intersects.length > 0) {
+			camera.position.x = front_intersects[0].point.x - dis - pback;
+		  }
+
+		  // left
+		  var back_ray = new THREE.Raycaster(back, l_vector, 0, dis);
+		  var back_intersects = back_ray.intersectObjects(walls);
+		  if (back_intersects.length > 0) {
+			camera.position.x = back_intersects[0].point.x + dis + pback;
+		  }
+		  var front_ray = new THREE.Raycaster(front, l_vector, 0, dis);
+		  var front_intersects = front_ray.intersectObjects(walls);
+		  if (front_intersects.length > 0) {
+			camera.position.x = front_intersects[0].point.x + dis + pback;
+		  }
+		  //////////////////////////////////////////////////////////////////////////////////////////////////
+		}
+
+		function render() {
+		  controls.update(clock.getDelta());
+		  renderer.render(scene, camera);
+		}
+		window.focus();
+
+
+	</script>
+</body>
+
+</html>

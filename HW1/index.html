@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+	#info {
+	  position: absolute;
+	  top: 2%;
+	  width: 100%;
+	  padding: 10px;
+	  text-align: left;
+	  color: #ffffff
+	}
+
+	body {
+	  overflow: hidden;
+	}
+</style>
+</head>
+
+<body> 
+	<div id="info">
+	<button id='onoffD'>On / Off</button>(房間燈)
+	  <br>
+	  <br>
+	  <button id='onoff'>On / Off</button>(樹燈)
+	  <br>
+	  <br>
+	  <button id='blink'>Blink</button>(模式1)
+	  <br>
+	  <br>
+	  <button id='blink2'>Blink2</button>(模式2)
+	  <br>
+	  <br>
+	  <button id='blink3'>Blink3</button>(模式3)
+	  <br>
+	  <br>
+	  <button id='nameS'>ShowName</button>(樹燈名字)
+	  <br>
+	  <br>
+	  尋找燈泡：<input id='nameI' type="text" placeholder="請輸入名字" ><button id='nameIY'>確定</button><button id='nameIC'>清除</button>
+	  <br>
+	  更改燈泡名字：<input id='nameC' type="text" placeholder="請輸入名字" ><button id='nameCY'>確定</button><button id='nameCC'>清除</button>
+	  <br><a href="http://jsfiddle.net/MomoWu/nyqyyf6x/">JSFiddle</a>
+	</div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r83/three.min.js"></script>
+	<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+	<script src="https://rawgit.com/jyunming-chen/tutsplus/master/js/text2D.js"></script>
+
+
+	<script>
+		var scene, camera, renderer;
+		var controls;
+
+		var dLight;
+		var onoffD = true;
+		
+		var lights = [];
+		var colors = [1, 0.68, 0.16, 0.68, 0.16, 1, 0.68, 1, 0.16, 1];
+		var onoff = true;
+		var blink = false;
+		var blink2 = false;
+		var blink3 = false;
+		var nameS = true;
+		var nameIY = false;
+		var nameIC = false;
+		var nameCY = false;
+		var nameCC = false;
+
+		var time;
+		var clock = new THREE.Clock();
+
+		var SpriteText2D = THREE_Text.SpriteText2D;
+		var textAlign = THREE_Text.textAlign;
+
+
+		init();
+		animate();
+
+		$("#onoffD").click(function() {
+		  onoffD = !onoffD;
+		});
+		$("#onoff").click(function() {
+		  onoff = !onoff;
+		  blink = false;
+		  blink2 = false;
+		});
+		$("#blink").click(function() {
+		  blink = !blink;
+		  if(onoff){
+			  if (blink) {
+				time = clock.getElapsedTime();
+				if(blink2)blink2 = !blink2;
+				if(blink3)blink3 = !blink3;
+			  } else {
+				for (var i = 0; i < 66; i++) {
+				  lights[i].status = true;
+				}
+			  }
+		  }
+		});
+		$("#blink2").click(function() {
+		  blink2 = !blink2;
+		  if(onoff){
+			  if (blink2) {
+				time = clock.getElapsedTime();
+				if(blink)blink = !blink;
+				if(blink3)blink3 = !blink3;
+			  } else {
+				for (var i = 0; i < 66; i++) {
+				  lights[i].status = true;
+				}
+			  }
+		  }
+		});
+		$("#blink3").click(function() {
+		  blink3 = !blink3;
+		  if(onoff){
+			  if (blink3) {
+				time = clock.getElapsedTime();
+				if(blink)blink = !blink;
+				if(blink2)blink2 = !blink2;
+				
+			  } else {
+				for (var i = 0; i < 66; i++) {
+				  lights[i].status = true;
+				}
+			  }
+		  }
+		});
+		$("#nameS").click(function() {
+		  nameS = !nameS;
+		});
+
+		function Light(name, pos) {
+		  if (name === undefined) {
+			Light.serial = Light.serial === undefined ? 0 : ++Light.serial;
+		  }
+		  this.name = name || 'Light' + Light.serial;
+
+		  this.status = true;
+		  
+		  this.pos = new THREE.Vector3();
+		  if (pos) this.pos.copy(pos);
+
+		  this.light = new THREE.PointLight("hsl(232, 100%, 0%)", 5, 2.5);
+		  this.light.position.copy(this.pos);
+		  scene.add(this.light);
+
+		  this.mesh = new THREE.Mesh(new THREE.SphereGeometry(0.25, 32, 32), new THREE.MeshBasicMaterial({
+			color: this.light.color
+		  }));
+		  this.mesh.position.copy(this.pos);
+		  scene.add(this.mesh);
+
+		  this.sprite = new SpriteText2D(this.name, {
+			align: textAlign.center,
+			font: '1px Arial', //Courier',
+			fillStyle: '#ffffff',
+			antialias: true
+		  });
+		  this.sprite.position.copy(this.pos);
+		  this.sprite.scale.set(.1, .1, .1);
+		  this.sprite.position.y += 2;
+		  scene.add(this.sprite);
+		}
+
+		function init() {
+
+		  renderer = new THREE.WebGLRenderer();
+		  document.body.appendChild(renderer.domElement);
+		  var width = window.innerWidth;
+		  var height = window.innerHeight;
+		  renderer.setSize(width, height);
+
+		  renderer.setClearColor(0x888888);
+
+		  scene = new THREE.Scene();
+		  var grid = new THREE.GridHelper(20, 20, 'red', 'white');
+		  //scene.add(grid);
+		  var axes = new THREE.AxisHelper(5);
+		  //scene.add(axes);
+
+		  camera = new THREE.PerspectiveCamera(75, width / height, 1, 1000);
+		  camera.position.y = 55;
+		  camera.position.z = 45;
+		  camera.lookAt(new THREE.Vector3(0, 20, 0));
+
+		  controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+		  window.addEventListener('resize', onWindowResize, false);
+
+		  clock.start();
+		  //////////////////////////tree//////////////////////////////
+		  
+
+		  dLight = new THREE.DirectionalLight(0xffffff, 0.3);
+		  dLight.position.set(0, 10, 10);
+		  scene.add(dLight);
+		  var dLight2 = dLight.clone();
+		  dLight2.position.set(0, -100, 0);
+		  //scene.add(dLight2);
+
+		  THREE.ImageUtils.crossOrigin = '';
+		  var textureL = THREE.ImageUtils.loadTexture('http://i.imgur.com/tbZmmVt.png');
+		  textureL.wrapS = THREE.RepeatWrapping;
+		  var textureL_B = THREE.ImageUtils.loadTexture('http://i.imgur.com/yG125fz.jpg');
+		  textureL_B.wrapS = THREE.RepeatWrapping;
+		  var textureT = THREE.ImageUtils.loadTexture('http://i.imgur.com/EU9eWHd.jpg');
+		  textureT.wrapS = THREE.RepeatWrapping;
+		  var textureT_B = THREE.ImageUtils.loadTexture('http://i.imgur.com/FBOkhFW.jpg');
+		  textureT_B.wrapS = THREE.RepeatWrapping;
+		  var texMatL = new THREE.MeshPhongMaterial({
+			wireframe: false,
+			map: textureL,
+			bumpMap: textureL_B,
+			bumpScale: 0.8,
+			side: THREE.DoubleSide
+		  });
+		  var texMatT = new THREE.MeshPhongMaterial({
+			wireframe: false,
+			map: textureT,
+			bumpMap: textureT_B,
+			bumpScale: 0.8,
+			side: THREE.DoubleSide
+		  });
+
+		  var trunk = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 40, 32), texMatT);
+		  scene.add(trunk);
+		  trunk.position.y = 20;
+
+		  var leaves = new THREE.Mesh(new THREE.CylinderGeometry(0, 6, 5, 32), texMatL);
+		  scene.add(leaves);
+		  leaves.position.y = 40;
+		  var leaves2 = new THREE.Mesh(new THREE.CylinderGeometry(0, 8, 7, 32), texMatL);
+		  scene.add(leaves2);
+		  leaves2.position.y = 37.5;
+		  var leaves3 = new THREE.Mesh(new THREE.CylinderGeometry(0, 10, 9, 32), texMatL);
+		  scene.add(leaves3);
+		  leaves3.position.y = 34;
+		  var leaves4 = new THREE.Mesh(new THREE.CylinderGeometry(0, 12, 11, 32), texMatL);
+		  scene.add(leaves4);
+		  leaves4.position.y = 29.5;
+		  var leaves5 = new THREE.Mesh(new THREE.CylinderGeometry(0, 14, 13, 32), texMatL);
+		  scene.add(leaves5);
+		  leaves5.position.y = 24;
+		  ///////////////////////////////////////////////////////////////////////
+		  for (var i = 0; i < 66; i++) {
+			if (i < 6)
+			  lights.push(new Light(i + 1, new THREE.Vector3(5 * Math.sin(i * Math.PI * 2 / 6), 38.5, 5 * Math.cos(i * Math.PI * 2 / 6))));
+			else if (i < 15 && i > 5)
+			  lights.push(new Light(i + 1, new THREE.Vector3(7 * Math.sin(i * Math.PI * 2 / 9), 35, 7 * Math.cos(i * Math.PI * 2 / 9))));
+			else if (i < 28 && i > 14)
+			  lights.push(new Light(i + 1, new THREE.Vector3(9 * Math.sin(i * Math.PI * 2 / 13), 30.5, 9 * Math.cos(i * Math.PI * 2 / 13))));
+			else if (i < 45 && i > 27)
+			  lights.push(new Light(i + 1, new THREE.Vector3(11 * Math.sin(i * Math.PI * 2 / 17), 25, 11 * Math.cos(i * Math.PI * 2 / 17))));
+			else
+			  lights.push(new Light(i + 1, new THREE.Vector3(13 * Math.sin(i * Math.PI * 2 / 21), 18.5, 13 * Math.cos(i * Math.PI * 2 / 21))));
+
+			lights[i].light.color.setHSL(colors[Math.floor(Math.random() * 10)], 1, 0.5);
+			lights[i].mesh.material.color = lights[i].light.color;
+		  }
+		  ///////////////////////////////floor////////////////////////////////
+		  var textureF = THREE.ImageUtils.loadTexture('http://i.imgur.com/iOtopAT.jpg');
+		  textureF.wrapS = THREE.RepeatWrapping;
+		  var textureF_B = THREE.ImageUtils.loadTexture('http://i.imgur.com/squhleF.jpg');
+		  textureF_B.wrapS = THREE.RepeatWrapping;
+		  textureF.wrapS = textureF.wrapT = THREE.RepeatWrapping; 
+		  textureF.repeat.set( 5, 5);
+		  var texMatF = new THREE.MeshPhongMaterial({
+			wireframe: false,
+			map: textureF,
+			bumpScale: 0.8,
+			side: THREE.DoubleSide
+		  });
+		  
+		  var floor = new THREE.Mesh(new THREE.PlaneGeometry(125, 125), texMatF);
+		  scene.add(floor);
+		  floor.rotation.x = Math.PI/2;
+		  floor.position.y = -0.001;
+		  
+		}
+
+		function onWindowResize() {
+
+		  var width = window.innerWidth;
+		  var height = window.innerHeight;
+		  camera.aspect = width / height;
+		  camera.updateProjectionMatrix();
+		  renderer.setSize(width, height);
+
+		}
+
+		function animate() {
+
+		  controls.update();
+		  requestAnimationFrame(animate);
+		  render();
+
+		  
+		  if (onoffD) {
+			  dLight.intensity = 1;
+		  } else {
+			  dLight.intensity = 0.3;
+		  }
+		  if (onoff) {
+			for (var i = 0; i < 66; i++) {
+			  lights[i].status = true;
+			}
+		  } else {
+			for (var i = 0; i < 66; i++) {
+			  lights[i].status = false;
+			}
+		  }
+		  
+		  if (blink && onoff) {
+			for (var i = 0; i < 66; i++) {
+			  if (i % 3 == 0) {
+				if (Math.floor((clock.getElapsedTime() - time) % 3) == 0)
+				  lights[i].status = true;
+				else
+				  lights[i].status = false;
+			  } else if (i % 3 == 1) {
+				if (Math.floor((clock.getElapsedTime() - time) % 3) == 1)
+				  lights[i].status = true;
+				else
+				  lights[i].status = false;
+			  } else if (i % 3 == 2) {
+				if (Math.floor((clock.getElapsedTime() - time) % 3) == 2)
+				  lights[i].status = true;
+				else
+				  lights[i].status = false;
+			  }
+			}
+		  }
+		  if (blink2 && onoff) {
+			for (var i = 0; i < 66; i++) {
+			  if (i < 6) {
+				if (Math.floor((clock.getElapsedTime() - time) % 5) == 0)
+				  lights[i].status = true;
+				else
+				  lights[i].status = false;
+			  } else if (i < 15 && i > 5) {
+				if (Math.floor((clock.getElapsedTime() - time) % 5) == 1)
+				  lights[i].status = true;
+				else
+				  lights[i].status = false;
+			  } else if (i < 28 && i > 14) {
+				if (Math.floor((clock.getElapsedTime() - time) % 5) == 2)
+				  lights[i].status = true;
+				else
+				  lights[i].status = false;
+			  }else if (i < 45 && i > 27){
+				if (Math.floor((clock.getElapsedTime() - time) % 5) == 3)
+				  lights[i].status = true;
+				else
+				  lights[i].status = false;
+			  }else{
+				if (Math.floor((clock.getElapsedTime() - time) % 5) == 4)
+				  lights[i].status = true;
+				else
+				  lights[i].status = false;
+			  }
+			}
+		  }
+		  if (blink3 && onoff) {
+			for (var i = 0; i < 66; i++) {
+				if (Math.floor((clock.getElapsedTime() - time)*10 % 67) <= i)
+					lights[i].status = false;
+				else	
+					lights[i].status = true;
+			}
+			if((clock.getElapsedTime() - time)*10 > 67){
+				for (var i = 0; i < 66; i++) {
+					if (Math.floor((clock.getElapsedTime() - time) % 2) == 0)
+						lights[i].status = true;
+					else if (Math.floor((clock.getElapsedTime() - time) % 2) == 1)	
+						lights[i].status = false;
+				}
+			}
+			if((clock.getElapsedTime() - time)*10 > 117)
+				time = clock.getElapsedTime();
+		  }
+		  for (var i = 0; i < 66; i++) {
+			if(lights[i].status){
+				lights[i].light.intensity = 5;
+				lights[i].mesh.material = new THREE.MeshBasicMaterial({color: lights[i].light.color});
+			}else{
+				lights[i].light.intensity = 0;
+				lights[i].mesh.material = new THREE.MeshBasicMaterial({color: 0x000000});
+			}
+		  }
+		  if (nameS) {
+			for (var i = 0; i < 66; i++) {
+			  lights[i].sprite.visible = true;
+			}
+		  } else {
+			for (var i = 0; i < 66; i++) {
+			  lights[i].sprite.visible = false;
+			}
+		  }
+		  
+		  if(nameIY){
+			if($("#nameI").val() !== ""){
+				for (var i = 0; i < 66; i++) {
+				  if(lights[i].name == $("#nameI").val())
+					lights[i].sprite.visible = true;
+				  else
+					lights[i].sprite.visible = false;
+				}
+			}
+		  }
+		  if(nameIC){
+			$("#nameI").val("");
+			nameIY = false;
+			nameIC = false;
+		  }
+		  if(nameCY){
+			if(nameIY){
+				if($("#nameI").val() !== ""){
+					if($("#nameC").val() !== ""){
+						for (var i = 0; i < 66; i++) {
+						  if(lights[i].name == $("#nameI").val()){
+							lights[i].name = $("#nameC").val();
+							nameIY = false;
+							lights[i].sprite.text = $("#nameC").val();
+							lights[i].sprite.visible = true;
+						  }else
+							lights[i].sprite.visible = false;
+						}
+					}
+				}
+			}else{
+				if($("#nameC").val() !== ""){
+					for (var i = 0; i < 66; i++) {
+					  if(lights[i].name == $("#nameC").val()){
+						lights[i].sprite.visible = true;
+					  }else
+						lights[i].sprite.visible = false;
+					}
+				}
+			}
+			
+		  }
+		  if(nameCC){
+			$("#nameC").val("");
+			nameCY = false;
+			nameCC = false;
+		  }
+		  
+		  //console.log($("#nameI").val());
+
+		}
+
+		$("#nameIY").click(function() {
+		  nameIY = true;
+		});
+		$("#nameIC").click(function() {
+		  nameIC = true;
+		});
+		$("#nameCY").click(function() {
+		  nameCY = true;
+		});
+		$("#nameCC").click(function() {
+		  nameCC = true;
+		});
+		function render() {
+
+		  renderer.render(scene, camera);
+
+		}
+
+		window.focus();
+	</script>
+</body>
+
+</html>
