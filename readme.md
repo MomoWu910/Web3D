@@ -14,6 +14,9 @@ The technical requirement of these project is the following:
 >#### Time-based animation (Stopwatch 碼表)
 - 模擬碼表的運作，可以暫停、重新計時，或是切換指針運動方式(連續or石英鐘)，以及3種呈現方式
 
+>#### Hierarchical Model 
+- 模擬坦克，基本的前後移動及發射砲彈，利用子畫面方便瞄準
+
 ### Web3D with ThreeJS 
 
 >#### Xmas Lights 聖誕樹燈
