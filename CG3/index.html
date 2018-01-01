@@ -68,7 +68,7 @@
 			var clock = new THREE.Clock();
 			var car = new THREE.Object3D();
 			var pos = new THREE.Vector3();
-			var speed = 0.1, angle = 0.0, vel;
+			var speed = 1.0, angle = 0.0, vel;
 			
 			var trees = [], treeCount = 0;
 			var shadow = false;
@@ -369,7 +369,7 @@
 				
 				//
 				buildTrees();
-				buildModel('car', 20, car, -150, 0);
+				buildModel('car', 20, car, -300, 0);
 				
 				var geometry = new THREE.PlaneGeometry( 1600, 1600, 32 );
 				var material = new THREE.MeshLambertMaterial( {color: 0xffffff, side: THREE.DoubleSide, map: pic1} );
@@ -405,23 +405,39 @@
 			function update(dt) {
 				
 				keyboard.update();
-				if ( keyboard.pressed("A") ) {
-					angle += 0.01; 
+				if ( keyboard.pressed("A") ){
+					if ( keyboard.pressed("S") ){
+						angle -= 0.01;
+					}
+					if(speed < 0){
+						angle -= 0.01;
+					}else{
+						angle += 0.01;
+					}
 				}
 				if ( keyboard.pressed("D") ){
-					angle -= 0.01; 
+					if ( keyboard.pressed("S") ){
+						angle += 0.01;
+					}
+					if(speed < 0){
+						angle += 0.01;
+					}else{
+						angle -= 0.01;
+					}
 				}   
-				if ( keyboard.pressed("W") )  
+				if ( keyboard.pressed("W") ){ 
 					speed += 0.5;        
-				if ( keyboard.pressed("S") )  
+				}
+				if ( keyboard.pressed("S") ){
 					speed -= 0.5;    
+				}
 				if ( keyboard.pressed("space") )  
 					speed = 0.0;    
 				if( keyboard.down("O"))
 					shadow = !shadow;
 					
 				
-				speed = Math.clamp (speed, -50.0, 50.0);		
+				speed = Math.clamp (speed, -30.0, 50.0);		
 				vel = new THREE.Vector3(speed,0,0);
 				
 				vel.applyAxisAngle (new THREE.Vector3(0,1,0), angle);
