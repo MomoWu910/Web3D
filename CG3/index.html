@@ -1,0 +1,487 @@
+
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<style>
+			#info {
+			  position: absolute;
+			  top: 0px;
+			  width: 100%;
+			  height: 100%;
+			  padding: 10px;
+			  text-align: center;
+			  color: #22cc22
+			}
+
+			div.tip {
+			  align: center;
+			  width: 80vw;
+			  height: auto;
+			  background-color: #333333;
+			  border: 1px solid black;
+			  opacity: 0.4;
+			  filter: alpha(opacity=60);
+			  /* For IE8 and earlier */
+			}
+
+			div.tip span {
+			  font-size: 5vh;
+			  height: 100%;
+			  font-weight: bold;
+			  color: #ffffff;
+			}
+
+			body {
+			  overflow: hidden;
+			}
+
+		</style>
+	</head>
+
+	<body> 
+		<div id="info">
+		  <div class="tip" style="pointer-events: none">
+			<span float="center" contenteditable="false">WS: speed | AD: rotate | space: stop car | mouse: minimap</span>
+		  </div>
+		</div>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+		<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+		<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+		
+		<script src="https://threejs.org/examples/js/loaders/LoaderSupport.js"></script>
+		<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/DDSLoader.js"></script>
+		<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
+		<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
+
+		<script>
+			var renderer, camera, topCamera, controls, scene, axes;
+
+			var keyboard = new KeyboardState();
+			var loader = new THREE.TextureLoader();
+			
+			var pic1;
+			
+			var clock = new THREE.Clock();
+			var car = new THREE.Object3D();
+			var pos = new THREE.Vector3();
+			var speed = 0.1, angle = 0.0, vel;
+			
+			var trees = [], treeCount = 0;
+			var shadow = false;
+			
+			(function() {
+			  Math.clamp = function(val,min,max){
+				return Math.min(Math.max(val,min),max);
+				
+			}})();
+			
+			function unitize (object, targetSize) {  
+  
+			  // find bounding box of 'object'
+			  var box3 = new THREE.Box3();
+			  box3.setFromObject (object);
+			  var size = new THREE.Vector3();
+			  size.subVectors (box3.max, box3.min);
+			  var center = new THREE.Vector3();
+			  center.addVectors(box3.max, box3.min).multiplyScalar (0.5);
+			   
+			  // uniform scaling according to objSize
+			  var objSize = Math.max (size.x, size.y, size.z); 
+			  var scaleSet = targetSize/objSize;
+			  
+			  var theObject =  new THREE.Object3D();
+			  theObject.add (object);
+			  object.scale.set (scaleSet, scaleSet, scaleSet);
+			  
+			  object.position.set (-center.x*scaleSet, -center.y*scaleSet + size.y/2*scaleSet, -center.z*scaleSet);
+			  
+			  return theObject;
+			}
+			
+			function onProgress (xhr) {
+				if (xhr.lengthComputable) {
+					var percentComplete = xhr.loaded / xhr.total * 100;
+					console.log(Math.round(percentComplete, 2) + '% downloaded');
+				  }
+		    };
+
+		    function onError(xhr) {};
+					
+					
+			function buildModel(url, size, obj, px, pz ){
+			
+				var mtlLoader = new THREE.MTLLoader();
+				var objLoader = new THREE.OBJLoader();
+			
+				mtlLoader.setPath('resources/');
+				mtlLoader.setTexturePath('resources/');
+				mtlLoader.setBaseUrl('resources/');
+				
+				
+				if(url === 'tree'){
+					
+					var mesh = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 25, 32), new THREE.MeshBasicMaterial({color:0xffffff, visible:false}));
+					obj.add(mesh);
+					mesh.position.set(-1, 12.5, 0);
+					
+					trees.push(new THREE.Vector3(px-1, 12.5, pz));
+					treeCount++;
+					
+				}else if(url === 'tree2'){
+					
+					var mesh = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 25, 32), new THREE.MeshBasicMaterial({color:0xffffff, visible:false}));
+					obj.add(mesh);
+					mesh.position.set(-5.75, 12.5, -6.7);
+					obj.rotation.y = Math.PI*Math.random();
+					
+					trees.push(new THREE.Vector3(px, 12.5, pz));
+					treeCount++;
+					
+				}else if(url === 'tree4'){
+					
+					var mesh = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 25, 32), new THREE.MeshBasicMaterial({color:0xffffff, visible:false}));
+					obj.add(mesh);
+					mesh.position.set(0, 12.5, -1);
+					obj.rotation.y = Math.PI*Math.random();
+					
+					trees.push(new THREE.Vector3(px, 12.5, pz-1));
+					treeCount++;
+				}else if(url === 'tree5'){
+				
+					var mesh = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 25, 32), new THREE.MeshBasicMaterial({color:0xffffff, visible:false}));
+					obj.add(mesh);
+					mesh.position.set(-1, 12.5, -1);
+					obj.rotation.y = Math.PI*Math.random();
+					
+					trees.push(new THREE.Vector3(px-1, 12.5, pz-1));
+					treeCount++;
+				}	
+				
+			
+				mtlLoader.load(url+'.mtl', function(materials) {
+				
+					materials.preload();
+					
+					objLoader.setMaterials(materials);
+					objLoader.setPath('resources/');
+					objLoader.load(url+'.obj', function(object) {
+					
+						var theObject =  unitize (object, size);
+						
+						
+						if(url !== 'car'){
+							obj.position.set(px, 0, pz);
+						}
+						else{
+							pos.set(px, 0, pz);
+						}
+						
+						obj.add(theObject);
+						scene.add(obj);
+						
+						obj.traverse (
+						   function (mesh) {
+							 if (mesh instanceof THREE.Mesh) {
+								mesh.castShadow = shadow;
+								mesh.receiveShadow = shadow;
+							  }
+							}
+						);
+						
+						return obj;
+						
+					}, onProgress, onError, null, false );
+					
+				});
+				
+			}
+			
+			///////////////////////////////////////////////////////////////
+			function coordinateTransformation(circleX, circleZ, carX, carZ, size){
+			
+				//oldXZ
+				var posC = new THREE.Vector3(circleX, 0, circleZ);
+				var posR = new THREE.Vector3(carX, 0, carZ);
+				
+				//oldXZTrans
+				var newPosC = new THREE.Vector3(0, 0, 0);
+				var newPosR = new THREE.Vector3(posR.x - posC.x, 0, posR.z - posC.z);
+				
+				//newXZ
+				var x = new THREE.Vector3(Math.cos(angle), 0, -Math.sin(angle)).normalize();
+				var z = x.clone().cross(new THREE.Vector3(0, 1, 0)).normalize().multiplyScalar(1);
+				
+				var p = new THREE.Vector3(newPosR.clone().dot(x), 0, newPosR.clone().dot(z));
+				
+				var pmax = new THREE.Vector3().addVectors(p, new THREE.Vector3(size/2, 0 , size*2/5));
+				var pmin = new THREE.Vector3().addVectors(p, new THREE.Vector3(-size/2, 0 , -size*2/5));
+				
+				//sphere.position.copy(pmax);
+				//sphere2.position.copy(pmin);
+				
+				return (new THREE.Vector4(pmax.x, pmax.z, pmin.x, pmin.z));
+			}
+			
+			function collision(circleX, circleZ, carX, carZ, rad){
+				
+				var p = coordinateTransformation(circleX, circleZ, carX, carZ, 25);
+				var rmax = new THREE.Vector2(p.x, p.y);
+				var rmin = new THREE.Vector2(p.z, p.w);
+				
+				var xM2 = Math.pow(rmax.x, 2);
+				var zM2 = Math.pow(rmax.y, 2);
+				var xm2 = Math.pow(rmin.x, 2);
+				var zm2 = Math.pow(rmin.y, 2);
+				var r2 = Math.pow(rad, 2);
+				
+				if(rmax.x < 0){//left
+					if(rmin.y > 0){//lower
+						return (xM2 + zm2 < r2);
+					}else if(rmax.y < 0){//upper
+						return (xM2 + zM2 < r2);
+					}else{//west
+						return (Math.abs(rmax.x) < rad);
+					}
+				}
+				else if(rmin.x > 0){//right
+					if(rmin.y > 0){//lower
+						return (xm2 + zm2 < r2);
+					}else if(rmax.y < 0){//upper
+						return (xm2 + zM2 < r2);
+					}else{//east
+						return (Math.abs(rmin.x) < rad);
+					}
+				}
+				else{
+					if(rmin.y > 0){//south
+						return (Math.abs(rmin.y) < rad);
+					}else if(rmax.y < 0){//north
+						return (Math.abs(rmax.y) < rad);
+					}else{//in	
+						return true;
+					}
+				}	
+					
+			}
+			
+			function buildTrees(){
+				buildModel('tree5', 150, new THREE.Object3D(), 0, 0);
+				buildModel('tree4', 80, new THREE.Object3D(), 40*Math.cos(Math.PI/4), 40*Math.sin(Math.PI/4));
+				buildModel('tree4', 80, new THREE.Object3D(), 40*Math.cos(Math.PI/4), -40*Math.sin(Math.PI/4));
+				buildModel('tree4', 80, new THREE.Object3D(), -40*Math.cos(Math.PI/4), -40*Math.sin(Math.PI/4));
+				buildModel('tree4', 80, new THREE.Object3D(), -40*Math.cos(Math.PI/4), 40*Math.sin(Math.PI/4));
+				
+				buildModel('tree2', 50, new THREE.Object3D(), 100, 0);
+				buildModel('tree2', 50, new THREE.Object3D(), 0, 100);
+				buildModel('tree2', 50, new THREE.Object3D(), -100, 0);
+				buildModel('tree2', 50, new THREE.Object3D(), 0, -100);
+				
+				for(var i = 3; i < 10; i++){
+					buildModel('tree2', 50, new THREE.Object3D(), 100*Math.cos(Math.PI/i), 100*Math.sin(Math.PI/i));
+					buildModel('tree2', 50, new THREE.Object3D(), -100*Math.cos(Math.PI/i), 100*Math.sin(Math.PI/i));
+					buildModel('tree2', 50, new THREE.Object3D(), -100*Math.cos(Math.PI/i), -100*Math.sin(Math.PI/i));
+					buildModel('tree2', 50, new THREE.Object3D(), 100*Math.cos(Math.PI/i), -100*Math.sin(Math.PI/i));
+					buildModel('tree2', 50, new THREE.Object3D(), 100*Math.sin(Math.PI/i), 100*Math.cos(Math.PI/i));
+					buildModel('tree2', 50, new THREE.Object3D(), -100*Math.sin(Math.PI/i), 100*Math.cos(Math.PI/i));
+					buildModel('tree2', 50, new THREE.Object3D(), -100*Math.sin(Math.PI/i), -100*Math.cos(Math.PI/i));
+					buildModel('tree2', 50, new THREE.Object3D(), 100*Math.sin(Math.PI/i), -100*Math.cos(Math.PI/i));
+				}
+				
+				buildModel('tree', 30, new THREE.Object3D(), 125, 0);
+				buildModel('tree', 30, new THREE.Object3D(), -125, 0);
+				buildModel('tree', 30, new THREE.Object3D(), 0, 125);
+				buildModel('tree', 30, new THREE.Object3D(), 0, -125);
+				
+				for(var i = 3; i < 12; i++){
+					buildModel('tree', 30, new THREE.Object3D(), 125*Math.cos(Math.PI/i), 125*Math.sin(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), -125*Math.cos(Math.PI/i), 125*Math.sin(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), -125*Math.cos(Math.PI/i), -125*Math.sin(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), 125*Math.cos(Math.PI/i), -125*Math.sin(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), 125*Math.sin(Math.PI/i), 125*Math.cos(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), -125*Math.sin(Math.PI/i), 125*Math.cos(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), -125*Math.sin(Math.PI/i), -125*Math.cos(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), 125*Math.sin(Math.PI/i), -125*Math.cos(Math.PI/i));
+				}
+				
+				for(var i = 2; i < 15; i++){
+					buildModel('tree', 30, new THREE.Object3D(), 200*Math.cos(Math.PI/i), 200*Math.sin(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), -200*Math.cos(Math.PI/i), 200*Math.sin(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), -200*Math.cos(Math.PI/i), -200*Math.sin(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), 200*Math.cos(Math.PI/i), -200*Math.sin(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), 200*Math.sin(Math.PI/i), 200*Math.cos(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), -200*Math.sin(Math.PI/i), 200*Math.cos(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), -200*Math.sin(Math.PI/i), -200*Math.cos(Math.PI/i));
+					buildModel('tree', 30, new THREE.Object3D(), 200*Math.sin(Math.PI/i), -200*Math.cos(Math.PI/i));
+				}
+				
+			}
+			/////////////////////////////////////////////////////////////////////////
+		
+			init();
+			animate();
+
+			function init() {
+			
+				container = document.createElement('div');
+				document.body.appendChild(container);
+
+				camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+				camera.position.z = 250;
+				camera.position.y = 250; // important
+
+				topCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+
+				scene = new THREE.Scene();
+
+				let gridXZ = new THREE.GridHelper(600, 60, 'red', 'white');
+				//scene.add(gridXZ);
+				gridXZ.position.y = 1;
+
+				var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+				
+				directionalLight.position.set(0, 800, 0);
+				
+				var light = new THREE.AmbientLight( 0xa0a0a0 ); // soft white light
+				scene.add( light );
+				
+				directionalLight.castShadow = shadow;
+				directionalLight.shadow.camera.left = -1600;
+				directionalLight.shadow.camera.top = -1600;
+				directionalLight.shadow.camera.right = 1600;
+				directionalLight.shadow.camera.bottom = 1600;
+				directionalLight.shadow.camera.near = 1;
+				directionalLight.shadow.camera.far = 1000;
+				directionalLight.shadow.mapSize.width = directionalLight.shadow.mapSize.height = 1024;
+				directionalLight.shadow.bias = 0.001; 
+				scene.add( directionalLight );
+				
+				//
+				loader.setCrossOrigin('');
+				pic1 = loader.load('https://i.imgur.com/kbRI8Rx.jpg');
+
+				pic1.repeat.set(100, 100);
+				pic1.wrapS = THREE.RepeatWrapping;
+				pic1.wrapT = THREE.RepeatWrapping;
+				
+				//
+				buildTrees();
+				buildModel('car', 20, car, -150, 0);
+				
+				var geometry = new THREE.PlaneGeometry( 1600, 1600, 32 );
+				var material = new THREE.MeshLambertMaterial( {color: 0xffffff, side: THREE.DoubleSide, map: pic1} );
+				var plane = new THREE.Mesh( geometry, material );
+				scene.add( plane );
+				plane.rotation.x = -Math.PI/2;
+				plane.receiveShadow = shadow;
+
+				renderer = new THREE.WebGLRenderer({
+					antialias: true
+				});
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				renderer.setClearColor(0x222222);
+				renderer.setPixelRatio(window.devicePixelRatio);
+				container.appendChild(renderer.domElement);
+				
+				controls = new THREE.OrbitControls(this.camera);
+				controls.enableKeys = false;
+				window.addEventListener('resize', onWindowResize, false);
+				
+				////////////////////////////////////////////////////////////////
+				renderer.shadowMap.enabled = shadow;//////////////
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+			}
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize(window.innerWidth, window.innerHeight);
+			}
+			
+			function update(dt) {
+				
+				keyboard.update();
+				if ( keyboard.pressed("A") ) {
+					angle += 0.01; 
+				}
+				if ( keyboard.pressed("D") ){
+					angle -= 0.01; 
+				}   
+				if ( keyboard.pressed("W") )  
+					speed += 0.5;        
+				if ( keyboard.pressed("S") )  
+					speed -= 0.5;    
+				if ( keyboard.pressed("space") )  
+					speed = 0.0;    
+				if( keyboard.down("O"))
+					shadow = !shadow;
+					
+				
+				speed = Math.clamp (speed, -50.0, 50.0);		
+				vel = new THREE.Vector3(speed,0,0);
+				
+				vel.applyAxisAngle (new THREE.Vector3(0,1,0), angle);
+				pos.add (vel.clone().multiplyScalar(dt)); 	
+			}
+			
+			function animate() {
+
+				controls.update();
+				
+				var dt = clock.getDelta();
+				update(dt);
+				
+				// car update
+				car.position.copy(pos);
+				car.rotation.y = angle + Math.PI/2;
+				topCamera.position.copy(car.localToWorld(new THREE.Vector3(2.25, 10, -1.5)));
+				topCamera.up.set (0,1,0);
+				topCamera.lookAt (car.localToWorld(new THREE.Vector3(0, 0, 50)));
+				
+				for(var i = 0; i < treeCount; i++){
+					if(new THREE.Vector2(trees[i].x, trees[i].z).distanceTo(new THREE.Vector2(pos.x, pos.z)) < 30){
+						if(collision(trees[i].x, trees[i].z, pos.x, pos.z, 2)){
+							speed *= -0.4;
+						}
+					}
+				}
+				
+				requestAnimationFrame(animate);
+				render();
+
+			}
+
+			function render(){
+				var SCREEN_W, SCREEN_H;
+				SCREEN_W = window.innerWidth;
+				SCREEN_H = window.innerHeight;
+
+				var left, bottom, width, height;
+
+				left = 1; bottom = 1; width = SCREEN_W; height = SCREEN_H;
+				renderer.setViewport (left,bottom,width,height);
+				renderer.setScissor(left,bottom,width,height);
+				renderer.setScissorTest(true);
+				camera.aspect = width/height;
+				camera.updateProjectionMatrix();
+				renderer.render (scene,topCamera);
+
+				left = 0.6*SCREEN_W+1; bottom = 1; width = 0.4*SCREEN_W-2; height = 0.4*SCREEN_H-2;
+				renderer.setViewport (left,bottom,width,height);
+				renderer.setScissor(left,bottom,width,height);
+				renderer.setScissorTest(true);  // clip out "viewport"
+				topCamera.aspect = width/height;
+				topCamera.updateProjectionMatrix();
+				renderer.render (scene,camera);
+			}
+
+			//window.focus();
+
+		</script>
+	</body>
+
+</html>

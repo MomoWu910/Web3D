@@ -17,6 +17,11 @@ The technical requirement of these project is the following:
 >#### Hierarchical Model 
 - 模擬坦克，基本的前後移動及發射砲彈，利用子畫面方便瞄準
 
+>#### Driving Car
+- 模擬車子，基本的加減速及轉彎
+- 碰撞偵測，車子撞到樹會停止
+
+
 ### Web3D with ThreeJS 
 
 >#### Xmas Lights 聖誕樹燈
