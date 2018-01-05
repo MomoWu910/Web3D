@@ -529,7 +529,7 @@
 				scene.add( houselight );
 				
 				housetarget = new THREE.Mesh(new THREE.SphereGeometry(5), new THREE.MeshBasicMaterial({visible: false}));
-				housetarget.position.set(21.75, 0, -61);
+				housetarget.position.set(21.75*2, 0, -61*2);
 				housetargetOBJ.add(housetarget);
 				scene.add(housetargetOBJ);
 				housetargetOBJ.position.set(-21.75, 0, 61);
@@ -544,6 +544,7 @@
 				house.decay = 0;
 				house.angle = 0.025;
 				house.penumbra = 0.5;
+				//house.distance = 40;
 				house.target = houseTT;
 				housetargetOBJ.add(house);
 				
