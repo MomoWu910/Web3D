@@ -21,6 +21,11 @@ The technical requirement of these project is the following:
 - 模擬車子，基本的加減速及轉彎
 - 碰撞偵測，車子撞到樹會停止
 
+>#### Light Remote Control
+- 燈光遙控器
+	- 房間燈：開/關，明/暗
+	- 檯燈：開/關，明/暗，旋轉
+	- 聖誕樹燈：開/關，三種模式
 
 ### Web3D with ThreeJS 
 

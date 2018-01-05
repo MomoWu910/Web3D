@@ -1,0 +1,955 @@
+
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<style>
+			#info {
+			  position: absolute;
+			  top: 0px;
+			  width: 100%;
+			  height: 100%;
+			  padding: 10px;
+			  text-align: center;
+			  color: #22cc22
+			}
+
+			div.tip {
+			  align: center;
+			  width: 80vw;
+			  height: auto;
+			  background-color: #333333;
+			  border: 1px solid black;
+			  opacity: 0.4;
+			  filter: alpha(opacity=60);
+			  /* For IE8 and earlier */
+			}
+
+			div.tip span {
+			  font-size: 5vh;
+			  height: 100%;
+			  font-weight: bold;
+			  color: #ffffff;
+			}
+
+			div.pause {
+			  position: absolute;
+			  left: 20vw;
+			  top: 40vh;
+			  width: 60vw;
+			  height: 30vh;
+			  opacity: 0.5;
+			  background-color: #333333;
+			}
+
+			div.pause span {
+			  position: relative;
+			  left: 2%;
+			  top: 40%;
+			  width: 80%;
+			  height: 65%;
+			  font-size: 30px;
+			  font-weight: bold;
+			  color: #ffffff;
+			}
+	
+			body {
+			  overflow: hidden;
+			}
+
+		</style>
+	</head>
+
+	<body> 
+		<div id="info">
+		  <div class="tip" style="pointer-events: none">
+			<span float="center" contenteditable="false">WASD: move | P: lock/unlcok screen | mouse: act</span>
+		  </div>
+		  <div class="pause" id="pause">
+			<span id="msg">Press P to unlock screen</span>
+		  </div>
+		</div>
+		
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+		<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+		
+		<script src="https://momowu910.github.io/JSFile/FirstPersonControls.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+		<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+		
+		<script src="https://threejs.org/examples/js/loaders/LoaderSupport.js"></script>
+		<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/DDSLoader.js"></script>
+		<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
+		<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
+
+		<script>
+			
+			var renderer, camera, topCamera, controls, controls2, scene;
+			var stop = false;
+
+			var keyboard = new KeyboardState();
+			var loader = new THREE.TextureLoader();
+			
+			var pic1, picR, picL, picX, picN1, picN2, picN3;
+			
+			var clock = new THREE.Clock(), time;
+			var testobj = new THREE.Object3D();
+			var shadow = true;
+			
+			var directionalLight;
+			var houselight, houseangle = 0, housetarget, spotLightHelper, house;
+			var housetargetOBJ = new THREE.Object3D();
+			
+			var roomB, lampB, xmasB, xmasB1, xmasB2, xmasB3, lampTB;
+			var roomI, lampI, roomIi = 1.2, lampIi = 1.2, roomIOn = false, lampIOn = false;
+			
+			var raycaster, raycaster2;
+			var pickables = [], pickables2 = [], trees = new THREE.Object3D();
+			var mouse = new THREE.Vector2();
+			
+			var tree = new THREE.Object3D(), lights = [], colors = [1, 0.68, 0.16, 0.68, 0.16, 1, 0.68, 1, 0.16, 1];
+			
+			var KP = 150, KD = 20;
+			var gravity = true;
+			var yrefR = 10, yrefL = 10;
+			var yyR = 0, vvR = 0, yyL = 0, vvL = 0;
+
+			class Button {
+				constructor(color, name, size, height) {
+					this.on = false;
+					this.hsl = color.getHSL();
+					this.size = size;
+					this.height = height;
+					this.obj = this.makeButton(name);
+					this.yy = 0;
+					this.vv = 0;
+					this.yref = 10;
+				}
+
+				feedbackForce() {
+					let f = -KP*(this.yy - this.yref) - KD*this.vv;
+					return f;
+				}
+				
+				get isOn() {
+					return this.on;
+				}
+
+				toggle() {
+					this.on = !this.on;
+					if (this.on)this.yref = 6;
+					else this.yref = 10;
+					this.update();
+				}
+
+				update() {
+					var f = this.feedbackForce();
+					if (gravity) f += (-20.8);
+					let dt = 0.01;
+					this.vv += f*dt;
+					this.yy += this.vv*dt;
+					
+					if (this.on) {
+						this.obj.scale.set (1, this.yy/10, 1);
+						this.obj.children[0].material.color = new THREE.Color(0x42B72A);
+					}else{ 
+						this.obj.scale.set(1, this.yy/10, 1);
+						this.obj.children[0].material.color.setHSL(this.hsl.h, this.hsl.s, this.hsl.l);
+					}
+					
+					if (this.on && Math.abs(this.yy/10-0.6) > 0.02)this.update();
+					else if (!this.on && Math.abs(1-this.yy/10) > 0.02)this.update();
+				}
+			  
+				makeButton(name) {
+					var mesh = new THREE.Mesh(new THREE.CylinderGeometry(this.size, this.size, this.height, 32), new THREE.MeshPhongMaterial());
+					var button = new THREE.Object3D();
+					button.add(mesh);
+					mesh.material.color.setHSL (this.hsl.h, this.hsl.s, this.hsl.l);
+					mesh.position.y = this.height/2+2;
+					mesh.material.transparent = true;
+					mesh.material.opacity = 0.5;
+					
+					if(name == 'room'){
+						var plane = new THREE.Mesh(new THREE.PlaneGeometry(this.size*1.8, this.size*1.8, 32), new THREE.MeshPhongMaterial({
+							map: picR,
+							transparent: true,
+							opacity: 1
+						}));
+						mesh.add(plane);
+						plane.position.set(0, this.height/2+0.1, 0);
+						plane.rotation.x = -Math.PI/2;
+						mesh.name = name;
+					}else if(name == 'lamp'){
+						var plane = new THREE.Mesh(new THREE.PlaneGeometry(this.size*1.6, this.size*1.6, 32), new THREE.MeshPhongMaterial({
+							map: picL,
+							transparent: true,
+							opacity: 1
+						}));
+						mesh.add(plane);
+						plane.position.set(0, this.height/2+0.1, 0);
+						plane.rotation.x = -Math.PI/2;
+						mesh.name = name;
+					}else if(name == 'xmas'){
+						var plane = new THREE.Mesh(new THREE.PlaneGeometry(this.size*1.6, this.size*1.6, 32), new THREE.MeshPhongMaterial({
+							map: picX,
+							transparent: true,
+							opacity: 1
+						}));
+						mesh.add(plane);
+						plane.position.set(0, this.height/2+0.1, 0);
+						plane.rotation.x = -Math.PI/2;
+						mesh.name = name;
+					}else if(name == 'xmas1'){
+						var plane = new THREE.Mesh(new THREE.PlaneGeometry(this.size*1.6, this.size*1.6, 32), new THREE.MeshPhongMaterial({
+							map: picN1,
+							transparent: true,
+							opacity: 1
+						}));
+						mesh.add(plane);
+						plane.position.set(0, this.height/2+0.1, 0);
+						plane.rotation.x = -Math.PI/2;
+						mesh.name = name;
+					}else if(name == 'xmas2'){
+						var plane = new THREE.Mesh(new THREE.PlaneGeometry(this.size*1.6, this.size*1.6, 32), new THREE.MeshPhongMaterial({
+							map: picN2,
+							transparent: true,
+							opacity: 1
+						}));
+						mesh.add(plane);
+						plane.position.set(0, this.height/2+0.1, 0);
+						plane.rotation.x = -Math.PI/2;
+						mesh.name = name;
+					}else if(name == 'xmas3'){
+						var plane = new THREE.Mesh(new THREE.PlaneGeometry(this.size*1.6, this.size*1.6, 32), new THREE.MeshPhongMaterial({
+							map: picN3,
+							transparent: true,
+							opacity: 1
+						}));
+						mesh.add(plane);
+						plane.position.set(0, this.height/2+0.1, 0);
+						plane.rotation.x = -Math.PI/2;
+						mesh.name = name;
+					}
+					
+					button.name = name;  // a string
+					return button;
+				}
+			}
+
+			function Light(pos) {
+
+				  this.status = true;
+				  
+				  this.pos = new THREE.Vector3();
+				  if (pos) this.pos.copy(pos);
+
+				  this.light = new THREE.PointLight("hsl(232, 100%, 0%)", 5, 2.5);
+				  this.light.position.copy(this.pos);
+				  //tree.add(this.light);
+
+				  this.mesh = new THREE.Mesh(new THREE.SphereGeometry(0.25, 32, 32), new THREE.MeshPhongMaterial({
+					color: this.light.color
+				  }));
+				  this.mesh.position.copy(this.pos);
+				  tree.add(this.mesh);
+			}
+			
+			function buildTree(){
+				
+				  var textureL = loader.load('http://i.imgur.com/tbZmmVt.png');
+				  var textureT = loader.load('http://i.imgur.com/EU9eWHd.jpg');
+				  
+				  var texMatL = new THREE.MeshPhongMaterial({map: textureL});
+				  var texMatT = new THREE.MeshPhongMaterial({map: textureT});
+
+				  var trunk = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 40, 32), texMatT);
+				  tree.add(trunk);
+				  trunk.position.y = 20;
+
+				  var leaves = new THREE.Mesh(new THREE.CylinderGeometry(0, 6, 5, 32), texMatL);
+				  tree.add(leaves);
+				  leaves.position.y = 40;
+				  var leaves2 = new THREE.Mesh(new THREE.CylinderGeometry(0, 8, 7, 32), texMatL);
+				  tree.add(leaves2);
+				  leaves2.position.y = 37.5;
+				  var leaves3 = new THREE.Mesh(new THREE.CylinderGeometry(0, 10, 9, 32), texMatL);
+				  tree.add(leaves3);
+				  leaves3.position.y = 34;
+				  var leaves4 = new THREE.Mesh(new THREE.CylinderGeometry(0, 12, 11, 32), texMatL);
+				  tree.add(leaves4);
+				  leaves4.position.y = 29.5;
+				  var leaves5 = new THREE.Mesh(new THREE.CylinderGeometry(0, 14, 13, 32), texMatL);
+				  tree.add(leaves5);
+				  leaves5.position.y = 24;
+				  trees.add(trunk, leaves, leaves2, leaves3, leaves4, leaves5);
+				  tree.add(trees);
+				  trees.traverse (
+					function (mesh) {
+					 if (mesh instanceof THREE.Mesh) {
+						mesh.material.side = THREE.DoubleSide;
+						mesh.castShadow = shadow;
+						mesh.receiveShadow = shadow;
+					  }
+					}
+				  );
+				  ///////////////////////////////////////////////////////////////////////
+				  for (var i = 0; i < 66; i++) {
+					if (i < 6)
+					  lights.push(new Light(new THREE.Vector3(5 * Math.sin(i * Math.PI * 2 / 6), 38.5, 5 * Math.cos(i * Math.PI * 2 / 6))));
+					else if (i < 15 && i > 5)
+					  lights.push(new Light(new THREE.Vector3(7 * Math.sin(i * Math.PI * 2 / 9), 35, 7 * Math.cos(i * Math.PI * 2 / 9))));
+					else if (i < 28 && i > 14)
+					  lights.push(new Light( new THREE.Vector3(9 * Math.sin(i * Math.PI * 2 / 13), 30.5, 9 * Math.cos(i * Math.PI * 2 / 13))));
+					else if (i < 45 && i > 27)
+					  lights.push(new Light(new THREE.Vector3(11 * Math.sin(i * Math.PI * 2 / 17), 25, 11 * Math.cos(i * Math.PI * 2 / 17))));
+					else
+					  lights.push(new Light(new THREE.Vector3(13 * Math.sin(i * Math.PI * 2 / 21), 18.5, 13 * Math.cos(i * Math.PI * 2 / 21))));
+
+					lights[i].light.color.setHSL(colors[Math.floor(Math.random() * 10)], 1, 0.5);
+					lights[i].mesh.material.color = lights[i].light.color;
+				  }
+				
+				
+			}
+			
+			function buildRemote(){
+				var remote = new THREE.Object3D();
+				var box = new THREE.Mesh(new THREE.BoxGeometry(30, 4, 40), new THREE.MeshPhongMaterial({color: 0x222222}));
+				roomB = new Button(new THREE.Color(0x9A9B9E), 'room', 3, 2.5);
+				roomB.obj.position.set(-8, 0.1, -12);
+				lampB = new Button(new THREE.Color(0x9A9B9E), 'lamp', 3, 2.5);
+				lampB.obj.position.set(-8, 0.1, 0);
+				lampTB = new Button(new THREE.Color(0x9A9B9E), 'lampT', 1.1, 2);
+				lampTB.obj.position.set(-3, 0.1,2);
+				xmasB = new Button(new THREE.Color(0x9A9B9E), 'xmas', 3, 2.5);
+				xmasB.obj.position.set(-8, 0.1, 12);
+				xmasB1 = new Button(new THREE.Color(0x9A9B9E), 'xmas1', 1.5, 2);
+				xmasB1.obj.position.set(0, 0.1, 12);
+				xmasB2 = new Button(new THREE.Color(0x9A9B9E), 'xmas2', 1.5, 2);
+				xmasB2.obj.position.set(5, 0.1, 12);
+				xmasB3 = new Button(new THREE.Color(0x9A9B9E), 'xmas3', 1.5, 2);
+				xmasB3.obj.position.set(10, 0.1, 12);
+				
+				//
+				roomI = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), new THREE.MeshPhongMaterial({
+					color: 0x000000,
+					shininess: 60,
+					specular: 0x2d2d2d
+				}));
+				roomI.position.set(0, 3.5, -12);
+				roomI.name = 'roomI';
+				
+				roomP = new THREE.Mesh( new THREE.PlaneGeometry( 10, 1, 32 ), new THREE.MeshPhongMaterial( {
+					color: 0x000000, 
+					side: THREE.DoubleSide
+				} ) );
+				roomP.position.set(5, 2.1, -12);
+				roomP.rotation.x = -Math.PI/2;
+				roomP.name = 'roomP';
+				//
+				lampI = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), new THREE.MeshPhongMaterial({
+					color: 0x000000,
+					shininess: 60,
+					specular: 0x2d2d2d
+				}));
+				lampI.position.set(0, 3.5, 0);
+				lampI.name = 'lampI';
+				
+				lampP = new THREE.Mesh( new THREE.PlaneGeometry( 10, 1, 32 ), new THREE.MeshPhongMaterial( {
+					color: 0x000000, 
+					side: THREE.DoubleSide
+				} ) );
+				lampP.position.set(5, 2.1, 0);
+				lampP.rotation.x = -Math.PI/2;
+				lampP.name = 'lampP';
+				
+				//
+				remote.position.set(10, 69, 35);
+				remote.rotation.y = Math.PI/2;
+				remote.scale.set (0.5, 0.5, 0.5);
+				remote.add(roomB.obj, lampB.obj, xmasB.obj, xmasB1.obj, xmasB2.obj, xmasB3.obj, lampTB.obj);
+				remote.add(roomI, roomP, lampI, lampP);
+				
+				remote.add(box);
+				scene.add(remote);
+				
+				remote.traverse (
+				   function (mesh) {
+					 if (mesh instanceof THREE.Mesh) {
+						mesh.material.side = THREE.DoubleSide;
+						mesh.castShadow = shadow;
+						mesh.receiveShadow = shadow;
+					  }
+					}
+				);
+				
+			}
+
+			
+			
+			(function() {
+			  Math.clamp = function(val,min,max){
+				return Math.min(Math.max(val,min),max);
+				
+			}})();
+			
+			function unitize (object, targetSize) {  
+  
+			  // find bounding box of 'object'
+			  var box3 = new THREE.Box3();
+			  box3.setFromObject (object);
+			  var size = new THREE.Vector3();
+			  size.subVectors (box3.max, box3.min);
+			  var center = new THREE.Vector3();
+			  center.addVectors(box3.max, box3.min).multiplyScalar (0.5);
+			   
+			  // uniform scaling according to objSize
+			  var objSize = Math.max (size.x, size.y, size.z); 
+			  var scaleSet = targetSize/objSize;
+			  
+			  var theObject =  new THREE.Object3D();
+			  theObject.add (object);
+			  object.scale.set (scaleSet, scaleSet, scaleSet);
+			  
+			  object.position.set (-center.x*scaleSet, -center.y*scaleSet + size.y/2*scaleSet, -center.z*scaleSet);
+			  
+			  return theObject;
+			}
+			
+			function onProgress (xhr) {
+				if (xhr.lengthComputable) {
+					var percentComplete = xhr.loaded / xhr.total * 100;
+					console.log(Math.round(percentComplete, 2) + '% downloaded');
+				  }
+		    };
+
+		    function onError(xhr) {};
+					
+					
+			function buildModel(url, size, obj, px, py, pz, xtheta, ytheta, ztheta){
+			
+				var mtlLoader = new THREE.MTLLoader();
+				var objLoader = new THREE.OBJLoader();
+			
+				mtlLoader.setPath('resources/');
+				mtlLoader.setTexturePath('resources/');
+				mtlLoader.setBaseUrl('resources/');
+			
+				mtlLoader.load(url+'.mtl', function(materials) {
+				
+					materials.preload();
+					
+					objLoader.setMaterials(materials);
+					objLoader.setPath('resources/');
+					objLoader.load(url+'.obj', function(object) {
+					
+						var theObject =  unitize (object, size);
+						
+						obj.position.set(px, py, pz);
+						
+						obj.add(theObject);
+						scene.add(obj);
+						
+						obj.rotation.x = xtheta;
+						obj.rotation.y = ytheta;
+						obj.rotation.z = ztheta;
+						
+						obj.traverse (
+						   function (mesh) {
+							 if (mesh instanceof THREE.Mesh) {
+								mesh.material.side = THREE.DoubleSide;
+								mesh.castShadow = shadow;
+								mesh.receiveShadow = shadow;
+							  }
+							}
+						);
+						
+						return obj;
+						
+					}, onProgress, onError, null, false );
+				});
+			}
+			
+			/////////////////////////////////////////////////////////////////////////
+		
+			init();
+			animate();
+
+			function init() {
+			
+				container = document.createElement('div');
+				document.body.appendChild(container);
+
+				camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+				camera.position.x = -180;
+				camera.position.y = 250; // important
+				//camera.rotation.y = -Math.PI;
+
+				topCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+
+				scene = new THREE.Scene();
+
+				let gridXZ = new THREE.GridHelper(600, 60, 'red', 'white');
+				//scene.add(gridXZ);
+				gridXZ.position.y = 1;
+
+				clock.start();
+				/////////////////////////////////////////////////////////////////////////////////////////
+				directionalLight = new THREE.DirectionalLight( 0xffffff);
+				directionalLight.position.set(0, 300, 0);
+				directionalLight.lookAt(new THREE.Vector3(0,0,0));
+				
+				directionalLight.castShadow = shadow;
+				directionalLight.shadow.camera.left = -1600;
+				directionalLight.shadow.camera.top = -1600;
+				directionalLight.shadow.camera.right = 1600;
+				directionalLight.shadow.camera.bottom = 1600;
+				directionalLight.shadow.camera.near = 1;
+				directionalLight.shadow.camera.far = 2000;
+				directionalLight.shadow.mapSize.width = 1024;
+				directionalLight.shadow.mapSize.height = 1024;
+				directionalLight.shadow.bias = 0.001; 
+				scene.add( directionalLight );
+				
+				houselight = new THREE.SpotLight( 0xfcb372);
+				houselight.position.set(-21.75, 110, 61);
+				houselight.decay = 1;
+				houselight.angle = Math.PI/3.5;
+				houselight.penumbra = 0.5;
+				
+				houselight.castShadow = shadow;
+				houselight.shadow.mapSize.width = 1024;
+				houselight.shadow.mapSize.height = 1024;
+				houselight.shadow.camera.near = 1;
+				houselight.shadow.camera.far = 1000;
+				houselight.shadow.camera.fov = 30;
+				scene.add( houselight );
+				
+				housetarget = new THREE.Mesh(new THREE.SphereGeometry(5), new THREE.MeshBasicMaterial({visible: false}));
+				housetarget.position.set(21.75, 0, -61);
+				housetargetOBJ.add(housetarget);
+				scene.add(housetargetOBJ);
+				housetargetOBJ.position.set(-21.75, 0, 61);
+				houselight.target = housetarget;
+				
+				
+				houseTT = new THREE.Object3D();
+				housetargetOBJ.add(houseTT);
+				houseTT.position.set(0, 99, 0);
+				house =  new THREE.SpotLight( 0xfcb372);
+				house.position.set(21.75, 99, -61);
+				house.decay = 0;
+				house.angle = 0.025;
+				house.penumbra = 0.5;
+				house.target = houseTT;
+				housetargetOBJ.add(house);
+				
+				spotLightHelper = new THREE.SpotLightHelper( house );
+				//scene.add( spotLightHelper );
+				
+				var light = new THREE.AmbientLight( 0x909090 ); // soft white light
+				scene.add( light );
+				/////////////////////////////////////////////////////////////////////////////////////////
+				
+				//
+				loader.setCrossOrigin('');
+				pic1 = loader.load('https://i.imgur.com/rICMHk2.jpg');
+				pic1.repeat.set(10, 10);
+				pic1.wrapS = THREE.RepeatWrapping;
+				pic1.wrapT = THREE.RepeatWrapping;
+				
+				picR = loader.load('https://i.imgur.com/2VxdWHb.png');				
+				picL = loader.load('https://i.imgur.com/hlPwvKQ.png');
+				picX = loader.load('https://i.imgur.com/DjGWToX.png');
+				picN1 = loader.load('https://i.imgur.com/FHGVo4I.png');				
+				picN2 = loader.load('https://i.imgur.com/7Q0YdfP.png');
+				picN3 = loader.load('https://i.imgur.com/IgwT1hm.png');
+				picNote = loader.load('https://i.imgur.com/zDglQZ1.png');
+				
+				//
+				buildModel('table', 175, new THREE.Object3D(), 0, 0, 0, 0, 0, 0);
+				buildModel('chair', 50, new THREE.Object3D(), 80, 0, 0, 0, 0, 0);
+				buildModel('lighthouse', 40, new THREE.Object3D(), -20, 68, 60, 0, Math.PI/2, 0);
+				buildModel('boat', 10, new THREE.Object3D(), -10, 69, 47, 0, Math.PI/2, 0);
+				buildModel('pc', 50, new THREE.Object3D(), -30, 69, 0, 0, -Math.PI/2, 0);
+				buildModel('keyboard', 40, new THREE.Object3D(), 10, 69, 0, 0, Math.PI*3/4, 0);
+				buildModel('cup', 15, new THREE.Object3D(), -10, 75.5, -38, -Math.PI/2, 0, 0);
+				buildModel('pen', 20, new THREE.Object3D(), -10, 79.5, -46.35, -0.1, 0, -Math.PI/2);
+				buildModel('pen2', 20, new THREE.Object3D(), -12, 79.5, -43.35, Math.PI*3/4-0.3, 0, 0);
+				buildModel('shiba', 15, new THREE.Object3D(), -20, 68.9, 32, 0, Math.PI*3/4-0.4, 0);
+				buildModel('blackshiba', 15, new THREE.Object3D(), -20, 68.9, -30, 0, Math.PI/2-0.4, 0);
+				buildModel('shiba', 80, new THREE.Object3D(), 70, 0, -110, 0, 0, 0);
+				buildModel('blackshiba', 80, new THREE.Object3D(), 100, 0, -110, 0, 0, 0);
+				buildModel('pen3', 20, new THREE.Object3D(), 20, 70, -50, Math.PI*3/4-0.3, 0, 0);
+				
+				///////////////////////////////////////////////////////////////////////////////////////////
+				buildRemote();
+				pickables.push(roomB.obj, lampB.obj, xmasB.obj, xmasB1.obj, xmasB2.obj, xmasB3.obj, lampTB.obj);
+				pickables2.push(roomP, lampP);
+				roomB.toggle();
+				roomI.position.set (10, 3.5, -12);
+				lampI.position.set (10, 3.5, 0);
+				///////////////////////////////////////////////////////////////////////////////////////////
+				buildTree();
+				scene.add(tree);
+				tree.position.set(-100, 0, -100);
+				tree.scale.set(3, 4, 3);
+				///////////////////////////////////////////////////////////////////////////////////////////
+				
+				var note = new THREE.Mesh( new THREE.PlaneGeometry( 24, 18, 32 ), new THREE.MeshPhongMaterial( {
+					color: 0xffffff, 
+					side: THREE.DoubleSide, 
+					map: picNote
+				} ) );
+				scene.add(note);
+				note.rotation.x = -Math.PI/2;
+				note.rotation.z = Math.PI/4+0.3;
+				note.receiveShadow = shadow;
+				note.position.set( 10, 69, -40);
+				
+				
+				var plane = new THREE.Mesh( new THREE.PlaneGeometry( 600, 600, 32 ), new THREE.MeshPhongMaterial( {
+					color: 0xffffff, 
+					side: THREE.DoubleSide, 
+					map: pic1
+				} ) );
+				scene.add( plane );
+				plane.rotation.x = -Math.PI/2;
+				plane.receiveShadow = shadow;
+
+				renderer = new THREE.WebGLRenderer({
+					antialias: true
+				});
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				renderer.setClearColor(0x222222);
+				renderer.setPixelRatio(window.devicePixelRatio);
+				container.appendChild(renderer.domElement);
+				
+				//controls = new THREE.OrbitControls(this.camera);
+				//controls.enableKeys = false;
+				
+				controls2 = new THREE.FirstPersonControls(camera);
+				controls2.movementSpeed = 100;
+				controls2.lookSpeed = 0.25;
+				controls2.lookVertical = true;
+				controls2.constrainVertical = true;
+				controls2.verticalMin = 1.1;
+				controls2.verticalMax = 2.5;
+				controls2.dispose();
+				
+				window.addEventListener('resize', onWindowResize, false);
+				
+				raycaster = new THREE.Raycaster();
+				raycaster.far = 1000;
+				raycaster2 = new THREE.Raycaster();
+				raycaster2.far = 1000;
+				document.addEventListener('mousemove', onMouseMove, false );
+				document.addEventListener('mousedown', onDocumentMouseDown, false);
+				////////////////////////////////////////////////////////////////
+				renderer.shadowMap.enabled = shadow;//////////////
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;//THREE.BasicShadowMap OR: THREE.PCFShadowMap OR THREE.PCFSoftShadowMap
+
+			}
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize(window.innerWidth, window.innerHeight);
+			}
+			
+			function onMouseMove( event ) {
+			
+				event.preventDefault();
+				
+				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+				
+				//console.log(pickables);
+				raycaster.setFromCamera(mouse, camera);
+				var intersects = raycaster.intersectObjects(pickables, true);
+				raycaster2.setFromCamera(mouse, camera);
+				var intersects2 = raycaster2.intersectObjects(pickables2, true);
+				
+				
+				if (intersects.length > 0 || intersects2.length > 0) {
+					document.body.style.cursor = 'pointer';
+				}else{
+					document.body.style.cursor = 'crosshair';
+				}
+				
+				
+			}
+			
+			
+			
+			function onDocumentMouseDown(event) {
+
+			  event.preventDefault();
+			  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+			  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+			  raycaster.setFromCamera(mouse, camera);
+			  var intersects = raycaster.intersectObjects(pickables, true);
+			  if (intersects.length > 0) {
+				//console.log(intersects[0].object.parent.on);
+				let picked = intersects[0].object.parent.name;
+				switch (picked) { 
+					case 'room':
+						roomB.toggle();
+						break;
+					case 'lamp':
+						lampB.toggle();
+						break;
+					case 'lampT':
+						lampTB.toggle();
+						break;
+					case 'xmas':
+						xmasB.toggle();
+						break;
+					case 'xmas1':
+						
+						xmasB1.toggle();
+						if(xmasB1.on){
+							if(xmasB2.on){
+								xmasB2.toggle();
+							}
+							if(xmasB3.on){
+								xmasB3.toggle();
+							}
+							time = clock.getElapsedTime();
+						}
+						break;
+					case 'xmas2':
+						xmasB2.toggle();
+						if(xmasB2.on){
+							if(xmasB1.on){
+								xmasB1.toggle();
+							}
+							if(xmasB3.on){
+								xmasB3.toggle();
+							}
+							time = clock.getElapsedTime();
+						}
+						break;
+					case 'xmas3':
+						xmasB3.toggle();
+						if(xmasB3.on){
+							if(xmasB1.on){
+								xmasB1.toggle();
+							}
+							if(xmasB2.on){
+								xmasB2.toggle();
+							}
+							time = clock.getElapsedTime();
+						}
+						break;
+				}
+			  }
+			  
+			  raycaster2.setFromCamera(mouse, camera);
+			  var intersects2 = raycaster2.intersectObjects(pickables2, true);
+			  if (intersects2.length > 0){
+					let picked = intersects2[0].object.name;
+					if(picked == 'roomP'){
+						//console.log((-(intersects2[0].point.z-32.5)*10+25)/5);
+						var x = (-(intersects2[0].point.z-32.5)*10+25)/5;
+						yrefR = x;
+						
+					}else if(picked == 'lampP'){
+						var x = (-(intersects2[0].point.z-32.5)*10+25)/5;
+						yrefL = x;						
+					}
+				  
+				  
+				}
+			}
+			
+			
+			function feedbackForce(yy, vv, yref) {
+				var f = -KP*(yy - yref) - KD*vv;
+			    return f;
+			}
+			
+			
+			function update(dt) {
+				
+				keyboard.update();
+				
+				if(lampTB.on){
+					houseangle += 0.01;
+				}
+				housetargetOBJ.rotation.y = houseangle;
+				//spotLightHelper.update();
+				if (keyboard.down("P")) {
+				    stop = !stop;
+			    }
+				if (stop) {
+					$('#msg').html("Press P to unlock screen");
+					$('#pause').show();
+					controls2.enabled = false;
+				} else {
+					$('#pause').hide();
+					controls2.enabled = true;
+				}
+				
+				
+			}
+			
+			function animate() {
+
+				controls2.update(clock.getDelta());
+				camera.position.y = 110;
+				//controls.update());
+				
+				var dt = clock.getDelta();
+				update(dt);
+				
+				//
+				var r = feedbackForce(yyR, vvR, yrefR);
+				if (gravity) r += (-20.8);
+			    var dttR = 0.01;
+			    vvR += r*dttR;
+			    yyR += vvR*dttR;
+
+				roomI.position.set(yyR, 3.5, -12);
+				roomIi = yyR*0.12;
+				//
+				var l = feedbackForce(yyL, vvL, yrefL);
+				if (gravity) l += (-20.8);
+			    var dttL = 0.01;
+			    vvL += l*dttL;
+			    yyL += vvL*dttL;
+
+				lampI.position.set(yyL, 3.5, 0);
+				lampIi = yyL*0.12;
+				
+				////////////////////////////////////////////
+				if(!roomB.on){
+					directionalLight.intensity = 0;
+				}else{
+					directionalLight.intensity = roomIi;
+				}
+				
+				if(!lampB.on){
+					houselight.intensity = 0;
+					house.intensity = 0;
+				}else{
+					houselight.intensity = lampIi;
+					house.intensity = lampIi;
+				}
+				
+				if (xmasB1.on && xmasB.on) {
+					for (var i = 0; i < 66; i++) {
+					  if (i % 3 == 0) {
+						  if (Math.floor((clock.getElapsedTime() - time) % 3) == 0)
+						  lights[i].status = true;
+						else
+						  lights[i].status = false;
+					  } else if (i % 3 == 1) {
+						if (Math.floor((clock.getElapsedTime() - time) % 3) == 1)
+						  lights[i].status = true;
+						else
+						  lights[i].status = false;
+					  } else if (i % 3 == 2) {
+						if (Math.floor((clock.getElapsedTime() - time) % 3) == 2)
+						  lights[i].status = true;
+						else
+						  lights[i].status = false;
+					  }
+					}
+				}
+				if (xmasB2.on && xmasB.on) {
+					for (var i = 0; i < 66; i++) {
+					  if (i < 6) {
+						if (Math.floor((clock.getElapsedTime() - time) % 5) == 0)
+						  lights[i].status = true;
+						else
+						  lights[i].status = false;
+					  } else if (i < 15 && i > 5) {
+						if (Math.floor((clock.getElapsedTime() - time) % 5) == 1)
+						  lights[i].status = true;
+						else
+						  lights[i].status = false;
+					  } else if (i < 28 && i > 14) {
+						if (Math.floor((clock.getElapsedTime() - time) % 5) == 2)
+						  lights[i].status = true;
+						else
+						  lights[i].status = false;
+					  }else if (i < 45 && i > 27){
+						if (Math.floor((clock.getElapsedTime() - time) % 5) == 3)
+						  lights[i].status = true;
+						else
+						  lights[i].status = false;
+					  }else{
+						if (Math.floor((clock.getElapsedTime() - time) % 5) == 4)
+						  lights[i].status = true;
+						else
+						  lights[i].status = false;
+					  }
+					}
+				}
+				if (xmasB3.on && xmasB.on) {
+					for (var i = 0; i < 66; i++) {
+						if (Math.floor((clock.getElapsedTime() - time)*10 % 67) <= i)
+							lights[i].status = false;
+						else	
+							lights[i].status = true;
+					}
+					if((clock.getElapsedTime() - time)*10 > 67){
+						for (var i = 0; i < 66; i++) {
+							if (Math.floor((clock.getElapsedTime() - time) % 2) == 0)
+								lights[i].status = true;
+							else if (Math.floor((clock.getElapsedTime() - time) % 2) == 1)	
+								lights[i].status = false;
+						}
+					}
+					if((clock.getElapsedTime() - time)*10 > 117)
+						time = clock.getElapsedTime();
+				}
+				for (var i = 0; i < 66; i++) {
+					if(lights[i].status && xmasB.on){
+						lights[i].mesh.material = new THREE.MeshBasicMaterial({color: lights[i].light.color});
+					}else{
+						lights[i].mesh.material = new THREE.MeshBasicMaterial({color: 0x000000});
+					}
+				}
+			
+				
+				requestAnimationFrame(animate);
+				render();
+
+			}
+
+			function render(){
+				var SCREEN_W, SCREEN_H;
+				SCREEN_W = window.innerWidth;
+				SCREEN_H = window.innerHeight;
+
+				var left, bottom, width, height;
+
+				left = 1; bottom = 1; width = SCREEN_W; height = SCREEN_H;
+				renderer.setViewport (left,bottom,width,height);
+				renderer.setScissor(left,bottom,width,height);
+				renderer.setScissorTest(true);
+				camera.aspect = width/height;
+				camera.updateProjectionMatrix();
+				renderer.render (scene,camera);
+
+				left = 0.6*SCREEN_W+1; bottom = 1; width = 0.4*SCREEN_W-2; height = 0.4*SCREEN_H-2;
+				renderer.setViewport (left,bottom,width,height);
+				renderer.setScissor(left,bottom,width,height);
+				renderer.setScissorTest(true);  // clip out "viewport"
+				topCamera.aspect = width/height;
+				topCamera.updateProjectionMatrix();
+				//renderer.render (scene,topCamera);
+			}
+
+			//window.focus();
+
+		</script>
+	</body>
+
+</html>
