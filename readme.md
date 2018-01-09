@@ -27,6 +27,21 @@ The technical requirement of these project is the following:
 	- 檯燈：開/關，明/暗，旋轉
 	- 聖誕樹燈：開/關，三種模式
 
+>#### Basic GLSL
+- 平面上有兩個teapot
+	- 一個使用MeshPhongMaterial，一個使用ShaderMaterial(GLSL)
+	- 畫面上方可以選擇GLSL的計算方式
+		- 物件座標 / 世界座標
+		- 根據每一點上色 / 根據每一像素上色
+	
+>#### Basic GLSL + teapot class
+- 點擊平面可以增加teapot
+	- teapot有生命值，旋轉時會同時減少
+	- teapot透明度也會隨生命值的減少而增加
+	- 當生命值歸零時，停止旋轉，並在一定時間後消失
+- 點擊teapot可以停止 / 繼續旋轉
+	
+	
 ### Web3D with ThreeJS 
 
 >#### Xmas Lights 聖誕樹燈
